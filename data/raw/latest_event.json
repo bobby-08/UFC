@@ -1,0 +1,18 @@
+{
+  "event": {
+    "event_link": "http://www.ufcstats.com/event-details/ba17afef01ed78b6",
+    "event_name": "UFC Fight Night: Muhammad vs. Bonfim",
+    "event_date": "June 06, 2026",
+    "event_location": "Las Vegas, Nevada, USA"
+  },
+  "main_event": {
+    "fight_link": "http://www.ufcstats.com/fight-details/5c69b019e6deee41",
+    "fighter_1": "Gabriel Bonfim",
+    "fighter_2": "Belal Muhammad",
+    "result": "win",
+    "weight_class": "Welterweight",
+    "method": "U-DEC",
+    "round": "5",
+    "time": "5:00"
+  }
+}
