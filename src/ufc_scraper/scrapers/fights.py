@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .fights_summary import FightRoundStats, FightSummaryRow, UFCStatsFightSummaryScraper, UFCStatsFightsScraper
+from .fights_details import FightRoundStats, FightSummaryRow, UFCStatsFightSummaryScraper, UFCStatsFightsScraper
 
 __all__ = [
     "FightRoundStats",

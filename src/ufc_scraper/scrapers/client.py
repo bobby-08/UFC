@@ -76,7 +76,6 @@ class UFCStatsClient:
                 "loading…",
                 "loading...",
                 "verify you are human",
-                "bot",
             )
         )
 
@@ -103,7 +102,7 @@ class UFCStatsClient:
                     pass
 
                 if required_selector is not None:
-                    page.wait_for_selector(required_selector, state="visible", timeout=timeout_ms)
+                    page.locator(required_selector).first.wait_for(state="attached", timeout=timeout_ms)
 
                 if settle_delay_seconds > 0:
                     time.sleep(settle_delay_seconds + random.uniform(0.15, 0.75))
