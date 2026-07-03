@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 
 from .client import AsyncUFCStatsClient, UFCStatsClient
+from .config import EVENTS_PATH
 from .parser import UFCStatsParser
 
 
@@ -109,21 +111,11 @@ class UFCStatsEventsScraper:
         return ""
 
     def scrape_latest_event(self) -> tuple[EventRow, FightRow]:
-        with self.client as client:
-            completed_events_html = client.get_html("statistics/events/completed?page=all")
-            events = self.parse_event_rows(completed_events_html)
-            if not events:
-                raise RuntimeError("No completed UFC events were found")
-
-            latest_event = events[0]
-            latest_event_html = client.get_html(latest_event.event_link)
-            main_event = self.parse_main_event(latest_event_html)
-
-        return latest_event, main_event
+        return asyncio.run(self.scrape_latest_event_async())
 
     async def scrape_latest_event_async(self) -> tuple[EventRow, FightRow]:
         async with AsyncUFCStatsClient() as client:
-            completed_events_html = await client.get_html("statistics/events/completed?page=all")
+            completed_events_html = await client.get_html(EVENTS_PATH)
             events = self.parse_event_rows(completed_events_html)
             if not events:
                 raise RuntimeError("No completed UFC events were found")

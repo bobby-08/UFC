@@ -1,9 +1,0 @@
-section,fight_link,round_label,fighter,kd,sig_str,sig_str_pct,total_str,td,td_pct,sub_att,rev,ctrl,head,body,leg,distance,clinch,ground
-totals,http://ufcstats.com/fight-details/c13dc0cccef263f7,Round 1,Rafael Fiziev,0,15 of 25,60%,18 of 29,2 of 2,100%,0,0,0:36,,,,,,
-totals,http://ufcstats.com/fight-details/c13dc0cccef263f7,Round 1,Manuel Torres,0,21 of 51,41%,25 of 55,0 of 0,---,0,0,0:06,,,,,,
-totals,http://ufcstats.com/fight-details/c13dc0cccef263f7,Round 2,Rafael Fiziev,1,10 of 14,71%,10 of 14,0 of 0,---,0,0,0:06,,,,,,
-totals,http://ufcstats.com/fight-details/c13dc0cccef263f7,Round 2,Manuel Torres,0,1 of 1,100%,1 of 1,0 of 0,---,0,0,0:00,,,,,,
-significant_strikes,http://ufcstats.com/fight-details/c13dc0cccef263f7,Round 1,Rafael Fiziev,,15 of 25,60%,,,,,,,4 of 8,1 of 3,10 of 14,14 of 24,0 of 0,1 of 1
-significant_strikes,http://ufcstats.com/fight-details/c13dc0cccef263f7,Round 1,Manuel Torres,,21 of 51,41%,,,,,,,15 of 44,4 of 5,2 of 2,20 of 48,1 of 3,0 of 0
-significant_strikes,http://ufcstats.com/fight-details/c13dc0cccef263f7,Round 2,Rafael Fiziev,,10 of 14,71%,,,,,,,9 of 13,1 of 1,0 of 0,2 of 3,3 of 5,5 of 6
-significant_strikes,http://ufcstats.com/fight-details/c13dc0cccef263f7,Round 2,Manuel Torres,,1 of 1,100%,,,,,,,1 of 1,0 of 0,0 of 0,0 of 0,1 of 1,0 of 0

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import sys
 from pathlib import Path
 from typing import Optional
@@ -27,7 +28,7 @@ def run_from_file(html_path: Path) -> None:
 
 def fetch_and_run(fight_url: str) -> None:
     scraper = UFCStatsFightsDetailsScraper()
-    totals, sigs = scraper.scrape_fight_details(fight_url)
+    totals, sigs = asyncio.run(scraper.scrape_fight_details_async(fight_url))
 
     print(f"Fetched TOTALS rows: {len(totals)}")
     for r in totals[:10]:

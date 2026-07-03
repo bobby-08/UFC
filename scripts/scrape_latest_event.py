@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import sys
 from pathlib import Path
@@ -8,7 +9,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from ufc_scraper.scrapers.config import EVENTS_PATH
 from ufc_scraper.scrapers.events import UFCStatsEventsScraper
 
 
@@ -16,15 +16,7 @@ def main() -> None:
     output_path = ROOT / "data" / "raw" / "latest_event.json"
 
     scraper = UFCStatsEventsScraper()
-    with scraper.client as client:
-        completed_events_html = client.get_html(EVENTS_PATH)
-        events = scraper.parse_event_rows(completed_events_html)
-        if not events:
-            raise RuntimeError("No completed UFC events were found")
-
-        latest_event = events[0]
-        latest_event_html = client.get_html(latest_event.event_link)
-        main_event = scraper.parse_main_event(latest_event_html)
+    latest_event, main_event = asyncio.run(scraper.scrape_latest_event_async())
 
     payload = {
         "event": {

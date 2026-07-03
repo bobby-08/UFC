@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 
 from .client import UFCStatsClient
+from .config import FIGHTERS_PATH
 from .parser import UFCStatsParser
 
 
@@ -68,14 +70,12 @@ class UFCStatsFightersScraper:
         return rows
 
     def scrape_all_fighters(self) -> list[FighterRow]:
-        with self.client as client:
-            html = client.get_html("statistics/fighters?page=all")
-        return self.parse_fighter_rows(html)
+        return asyncio.run(self.scrape_all_fighters_async())
 
     async def scrape_all_fighters_async(self) -> list[FighterRow]:
         from .client import AsyncUFCStatsClient
 
         async with AsyncUFCStatsClient() as client:
-            html = await client.get_html("statistics/fighters?page=all")
+            html = await client.get_html(FIGHTERS_PATH)
 
         return self.parse_fighter_rows(html)

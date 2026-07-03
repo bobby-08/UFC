@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 import re
 
@@ -132,9 +133,7 @@ class UFCStatsFightSummaryScraper:
         )
 
     def scrape_fight_summary(self, fight_url: str) -> FightSummaryRow:
-        with self.client as client:
-            html = client.get_html(fight_url)
-        return self.parse_fight_summary(html, fight_url=fight_url)
+        return asyncio.run(self.scrape_fight_summary_async(fight_url))
 
     async def scrape_fight_summary_async(self, fight_url: str) -> FightSummaryRow:
         async with AsyncUFCStatsClient() as client:

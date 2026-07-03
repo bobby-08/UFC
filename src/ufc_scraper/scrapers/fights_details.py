@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 import re
 from typing import List
@@ -234,31 +235,7 @@ class UFCStatsFightsDetailsScraper:
         return rows
 
     def scrape_fight_details(self, fight_url: str) -> tuple[List[TotalsRow], List[SignificantStrikesRow]]:
-        with self.client as client:
-            # Warm the browser session on a normal UFCStats page before the deep-linked fight page.
-            try:
-                client.get_html(
-                    "",
-                    retries=1,
-                    retry_delay_seconds=1.5,
-                    settle_delay_seconds=0.75,
-                )
-            except Exception:
-                # If the warmup is blocked, continue and let the fight page retry logic decide.
-                pass
-            html = client.get_html(
-                fight_url,
-                required_selector="table.b-fight-details__table.js-fight-table",
-                retries=4,
-                retry_delay_seconds=3.0,
-                settle_delay_seconds=1.25,
-            )
-            self._expand_round_sections_sync(client.page)
-            html = client.page.content()
-
-        totals = self.parse_totals(html, fight_url=fight_url)
-        sigs = self.parse_significant_strikes(html, fight_url=fight_url)
-        return totals, sigs
+        return asyncio.run(self.scrape_fight_details_async(fight_url))
 
     async def scrape_fight_details_async(self, fight_url: str) -> tuple[List[TotalsRow], List[SignificantStrikesRow]]:
         async with AsyncUFCStatsClient(headless=False, persistent_profile=True) as client:
