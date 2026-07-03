@@ -1,0 +1,115 @@
+{
+  "fight_url": "http://ufcstats.com/fight-details/c13dc0cccef263f7",
+  "totals": [
+    {
+      "fight_link": "http://ufcstats.com/fight-details/c13dc0cccef263f7",
+      "round_label": "Round 1",
+      "fighter": "Rafael Fiziev",
+      "kd": "0",
+      "sig_str": "15 of 25",
+      "sig_str_pct": "60%",
+      "total_str": "18 of 29",
+      "td": "2 of 2",
+      "td_pct": "100%",
+      "sub_att": "0",
+      "rev": "0",
+      "ctrl": "0:36"
+    },
+    {
+      "fight_link": "http://ufcstats.com/fight-details/c13dc0cccef263f7",
+      "round_label": "Round 1",
+      "fighter": "Manuel Torres",
+      "kd": "0",
+      "sig_str": "21 of 51",
+      "sig_str_pct": "41%",
+      "total_str": "25 of 55",
+      "td": "0 of 0",
+      "td_pct": "---",
+      "sub_att": "0",
+      "rev": "0",
+      "ctrl": "0:06"
+    },
+    {
+      "fight_link": "http://ufcstats.com/fight-details/c13dc0cccef263f7",
+      "round_label": "Round 2",
+      "fighter": "Rafael Fiziev",
+      "kd": "1",
+      "sig_str": "10 of 14",
+      "sig_str_pct": "71%",
+      "total_str": "10 of 14",
+      "td": "0 of 0",
+      "td_pct": "---",
+      "sub_att": "0",
+      "rev": "0",
+      "ctrl": "0:06"
+    },
+    {
+      "fight_link": "http://ufcstats.com/fight-details/c13dc0cccef263f7",
+      "round_label": "Round 2",
+      "fighter": "Manuel Torres",
+      "kd": "0",
+      "sig_str": "1 of 1",
+      "sig_str_pct": "100%",
+      "total_str": "1 of 1",
+      "td": "0 of 0",
+      "td_pct": "---",
+      "sub_att": "0",
+      "rev": "0",
+      "ctrl": "0:00"
+    }
+  ],
+  "significant_strikes": [
+    {
+      "fight_link": "http://ufcstats.com/fight-details/c13dc0cccef263f7",
+      "round_label": "Round 1",
+      "fighter": "Rafael Fiziev",
+      "sig_str": "15 of 25",
+      "sig_str_pct": "60%",
+      "head": "4 of 8",
+      "body": "1 of 3",
+      "leg": "10 of 14",
+      "distance": "14 of 24",
+      "clinch": "0 of 0",
+      "ground": "1 of 1"
+    },
+    {
+      "fight_link": "http://ufcstats.com/fight-details/c13dc0cccef263f7",
+      "round_label": "Round 1",
+      "fighter": "Manuel Torres",
+      "sig_str": "21 of 51",
+      "sig_str_pct": "41%",
+      "head": "15 of 44",
+      "body": "4 of 5",
+      "leg": "2 of 2",
+      "distance": "20 of 48",
+      "clinch": "1 of 3",
+      "ground": "0 of 0"
+    },
+    {
+      "fight_link": "http://ufcstats.com/fight-details/c13dc0cccef263f7",
+      "round_label": "Round 2",
+      "fighter": "Rafael Fiziev",
+      "sig_str": "10 of 14",
+      "sig_str_pct": "71%",
+      "head": "9 of 13",
+      "body": "1 of 1",
+      "leg": "0 of 0",
+      "distance": "2 of 3",
+      "clinch": "3 of 5",
+      "ground": "5 of 6"
+    },
+    {
+      "fight_link": "http://ufcstats.com/fight-details/c13dc0cccef263f7",
+      "round_label": "Round 2",
+      "fighter": "Manuel Torres",
+      "sig_str": "1 of 1",
+      "sig_str_pct": "100%",
+      "head": "1 of 1",
+      "body": "0 of 0",
+      "leg": "0 of 0",
+      "distance": "0 of 0",
+      "clinch": "1 of 1",
+      "ground": "0 of 0"
+    }
+  ]
+}

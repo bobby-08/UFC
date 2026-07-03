@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 
-from .client import UFCStatsClient
+from .client import AsyncUFCStatsClient, UFCStatsClient
 from .parser import UFCStatsParser
 
 
@@ -59,6 +60,13 @@ class UFCStatsFightSummaryScraper:
 
         return "", "", ""
 
+    def _section_value(self, section_text: str, label: str) -> str:
+        pattern = rf"{re.escape(label)}\s*(.*?)(?=\s*(?:Method:|Round:|Time:|Time format:|Referee:|Details:)|$)"
+        match = re.search(pattern, section_text, flags=re.IGNORECASE | re.DOTALL)
+        if match is None:
+            return ""
+        return " ".join(match.group(1).split())
+
     def parse_fight_summary(self, html: str, fight_url: str = "") -> FightSummaryRow:
         soup = self.parser.soup(html)
 
@@ -85,27 +93,13 @@ class UFCStatsFightSummaryScraper:
             raise ValueError("Could not find the fight details section")
 
         bout_type = self.parser.text(fight_section.select_one("i.b-fight-details__fight-title"))
-        method = ""
-        round_label = ""
-        time = ""
-        time_format = ""
-        referee = ""
-        details = ""
-
-        for text_item in fight_section.select("p.b-fight-details__text"):
-            raw_text = self.parser.text(text_item)
-            if raw_text.startswith("Method:"):
-                method = raw_text.replace("Method:", "", 1).strip()
-            elif raw_text.startswith("Round:"):
-                round_label = raw_text.replace("Round:", "", 1).strip()
-            elif raw_text.startswith("Time:"):
-                time = raw_text.replace("Time:", "", 1).strip()
-            elif raw_text.startswith("Time format:"):
-                time_format = raw_text.replace("Time format:", "", 1).strip()
-            elif raw_text.startswith("Referee:"):
-                referee = raw_text.replace("Referee:", "", 1).strip()
-            elif raw_text.startswith("Details:"):
-                details = raw_text.replace("Details:", "", 1).strip()
+        section_text = self.parser.text(fight_section)
+        method = self._section_value(section_text, "Method:")
+        round_label = self._section_value(section_text, "Round:")
+        time = self._section_value(section_text, "Time:")
+        time_format = self._section_value(section_text, "Time format:")
+        referee = self._section_value(section_text, "Referee:")
+        details = self._section_value(section_text, "Details:")
 
         result, winner, loser = self._parse_result(
             people[0]["name"],
@@ -140,6 +134,12 @@ class UFCStatsFightSummaryScraper:
     def scrape_fight_summary(self, fight_url: str) -> FightSummaryRow:
         with self.client as client:
             html = client.get_html(fight_url)
+        return self.parse_fight_summary(html, fight_url=fight_url)
+
+    async def scrape_fight_summary_async(self, fight_url: str) -> FightSummaryRow:
+        async with AsyncUFCStatsClient() as client:
+            html = await client.get_html(fight_url)
+
         return self.parse_fight_summary(html, fight_url=fight_url)
 
 

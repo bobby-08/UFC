@@ -1,0 +1,19 @@
+{
+  "event": {
+    "event_link": "http://www.ufcstats.com/event-details/31e1ea6fe6b682f8",
+    "event_name": "UFC Fight Night: Fiziev vs. Torres",
+    "event_date": "June 27, 2026",
+    "event_location": "Baku, Azerbaijan"
+  },
+  "main_event": {
+    "fight_link": "http://www.ufcstats.com/fight-details/c13dc0cccef263f7",
+    "fighter_1": "Rafael Fiziev",
+    "fighter_2": "Manuel Torres",
+    "result_fighter_1": "W",
+    "result_fighter_2": "L",
+    "weight_class": "Lightweight",
+    "method": "KO/TKO Punches",
+    "round": "2",
+    "time": "0:15"
+  }
+}

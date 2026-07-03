@@ -71,3 +71,11 @@ class UFCStatsFightersScraper:
         with self.client as client:
             html = client.get_html("statistics/fighters?page=all")
         return self.parse_fighter_rows(html)
+
+    async def scrape_all_fighters_async(self) -> list[FighterRow]:
+        from .client import AsyncUFCStatsClient
+
+        async with AsyncUFCStatsClient() as client:
+            html = await client.get_html("statistics/fighters?page=all")
+
+        return self.parse_fighter_rows(html)

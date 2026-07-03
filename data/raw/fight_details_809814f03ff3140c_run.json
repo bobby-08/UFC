@@ -1,0 +1,61 @@
+{
+  "fight_url": "http://www.ufcstats.com/fight-details/809814f03ff3140c",
+  "totals": [
+    {
+      "fight_link": "http://www.ufcstats.com/fight-details/809814f03ff3140c",
+      "round_label": "Totals",
+      "fighter": "Nazim Sadykhov",
+      "kd": "0",
+      "sig_str": "0 of 16",
+      "sig_str_pct": "0%",
+      "total_str": "0 of 16",
+      "td": "0 of 0",
+      "td_pct": "---",
+      "sub_att": "0",
+      "rev": "0",
+      "ctrl": "0:00"
+    },
+    {
+      "fight_link": "http://www.ufcstats.com/fight-details/809814f03ff3140c",
+      "round_label": "Totals",
+      "fighter": "Matheus Camilo",
+      "kd": "1",
+      "sig_str": "4 of 10",
+      "sig_str_pct": "40%",
+      "total_str": "4 of 10",
+      "td": "0 of 0",
+      "td_pct": "---",
+      "sub_att": "0",
+      "rev": "0",
+      "ctrl": "0:03"
+    }
+  ],
+  "significant_strikes": [
+    {
+      "fight_link": "http://www.ufcstats.com/fight-details/809814f03ff3140c",
+      "round_label": "Totals",
+      "fighter": "Nazim Sadykhov",
+      "sig_str": "0 of 16",
+      "sig_str_pct": "0%",
+      "head": "0 of 10",
+      "body": "0 of 1",
+      "leg": "0 of 5",
+      "distance": "0 of 16",
+      "clinch": "0 of 0",
+      "ground": "0 of 0"
+    },
+    {
+      "fight_link": "http://www.ufcstats.com/fight-details/809814f03ff3140c",
+      "round_label": "Totals",
+      "fighter": "Matheus Camilo",
+      "sig_str": "4 of 10",
+      "sig_str_pct": "40%",
+      "head": "3 of 8",
+      "body": "0 of 0",
+      "leg": "1 of 2",
+      "distance": "2 of 6",
+      "clinch": "0 of 0",
+      "ground": "2 of 4"
+    }
+  ]
+}
