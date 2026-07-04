@@ -14,13 +14,14 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from ufc_scraper.scrapers.fights_summary import UFCStatsFightSummaryScraper
+from ufc_scraper.storage import build_raw_output_path
 
 
 def default_output_path(fight_url: str) -> Path:
     fight_id = Path(urlparse(fight_url).path).name
     if not fight_id:
         fight_id = "fight_summary"
-    return ROOT / "data" / "raw" / f"fight_summary_{fight_id}.json"
+    return build_raw_output_path("fight_summary", f"fight_summary_{fight_id}.json")
 
 
 async def write_json_from_url_async(fight_url: str, output_path: Path) -> dict[str, str]:

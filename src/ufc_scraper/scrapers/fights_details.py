@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 import re
 from typing import List
 
@@ -38,6 +38,54 @@ class SignificantStrikesRow:
     distance: str
     clinch: str
     ground: str
+
+
+@dataclass(slots=True)
+class TotalsPairRow:
+    round_label: str
+    fighter1: str
+    kd_fighter1: str
+    sig_str_fighter1: str
+    sig_str_pct_fighter1: str
+    total_str_fighter1: str
+    td_fighter1: str
+    td_pct_fighter1: str
+    sub_att_fighter1: str
+    rev_fighter1: str
+    ctrl_fighter1: str
+    fighter2: str
+    kd_fighter2: str
+    sig_str_fighter2: str
+    sig_str_pct_fighter2: str
+    total_str_fighter2: str
+    td_fighter2: str
+    td_pct_fighter2: str
+    sub_att_fighter2: str
+    rev_fighter2: str
+    ctrl_fighter2: str
+
+
+@dataclass(slots=True)
+class SignificantStrikesPairRow:
+    round_label: str
+    fighter1: str
+    sig_str_fighter1: str
+    sig_str_pct_fighter1: str
+    head_fighter1: str
+    body_fighter1: str
+    leg_fighter1: str
+    distance_fighter1: str
+    clinch_fighter1: str
+    ground_fighter1: str
+    fighter2: str
+    sig_str_fighter2: str
+    sig_str_pct_fighter2: str
+    head_fighter2: str
+    body_fighter2: str
+    leg_fighter2: str
+    distance_fighter2: str
+    clinch_fighter2: str
+    ground_fighter2: str
 
 
 class UFCStatsFightsDetailsScraper:
@@ -265,4 +313,99 @@ class UFCStatsFightsDetailsScraper:
         return totals, sigs
 
 
-__all__ = ["TotalsRow", "SignificantStrikesRow", "UFCStatsFightsDetailsScraper"]
+def format_totals_rows_for_json(rows: List[TotalsRow]) -> list[TotalsPairRow]:
+    if len(rows) % 2 != 0:
+        raise ValueError(f"Expected an even number of totals rows, got {len(rows)}")
+
+    combined: list[TotalsPairRow] = []
+    for index in range(0, len(rows), 2):
+        first = rows[index]
+        second = rows[index + 1]
+        combined.append(
+            TotalsPairRow(
+                round_label=first.round_label,
+                fighter1=first.fighter,
+                kd_fighter1=first.kd,
+                sig_str_fighter1=first.sig_str,
+                sig_str_pct_fighter1=first.sig_str_pct,
+                total_str_fighter1=first.total_str,
+                td_fighter1=first.td,
+                td_pct_fighter1=first.td_pct,
+                sub_att_fighter1=first.sub_att,
+                rev_fighter1=first.rev,
+                ctrl_fighter1=first.ctrl,
+                fighter2=second.fighter,
+                kd_fighter2=second.kd,
+                sig_str_fighter2=second.sig_str,
+                sig_str_pct_fighter2=second.sig_str_pct,
+                total_str_fighter2=second.total_str,
+                td_fighter2=second.td,
+                td_pct_fighter2=second.td_pct,
+                sub_att_fighter2=second.sub_att,
+                rev_fighter2=second.rev,
+                ctrl_fighter2=second.ctrl,
+            )
+        )
+
+    return combined
+
+
+def format_significant_strikes_rows_for_json(rows: List[SignificantStrikesRow]) -> list[SignificantStrikesPairRow]:
+    if len(rows) % 2 != 0:
+        raise ValueError(f"Expected an even number of significant strikes rows, got {len(rows)}")
+
+    combined: list[SignificantStrikesPairRow] = []
+    for index in range(0, len(rows), 2):
+        first = rows[index]
+        second = rows[index + 1]
+        combined.append(
+            SignificantStrikesPairRow(
+                round_label=first.round_label,
+                fighter1=first.fighter,
+                sig_str_fighter1=first.sig_str,
+                sig_str_pct_fighter1=first.sig_str_pct,
+                head_fighter1=first.head,
+                body_fighter1=first.body,
+                leg_fighter1=first.leg,
+                distance_fighter1=first.distance,
+                clinch_fighter1=first.clinch,
+                ground_fighter1=first.ground,
+                fighter2=second.fighter,
+                sig_str_fighter2=second.sig_str,
+                sig_str_pct_fighter2=second.sig_str_pct,
+                head_fighter2=second.head,
+                body_fighter2=second.body,
+                leg_fighter2=second.leg,
+                distance_fighter2=second.distance,
+                clinch_fighter2=second.clinch,
+                ground_fighter2=second.ground,
+            )
+        )
+
+    return combined
+
+
+def build_fight_details_payload(
+    fight_url: str,
+    totals: List[TotalsRow],
+    sigs: List[SignificantStrikesRow],
+) -> dict[str, object]:
+    totals_payload = [asdict(row) for row in format_totals_rows_for_json(totals)]
+    sigs_payload = [asdict(row) for row in format_significant_strikes_rows_for_json(sigs)]
+    return {
+        "fight_url": fight_url,
+        "totals": totals_payload,
+        "significant_strikes": sigs_payload,
+    }
+
+
+__all__ = [
+    "SignificantStrikesPairRow",
+    "SignificantStrikesRow",
+    "TotalsPairRow",
+    "TotalsRow",
+    "UFCStatsFightsDetailsScraper",
+    "build_fight_details_payload",
+    "format_significant_strikes_rows_for_json",
+    "format_totals_rows_for_json",
+]

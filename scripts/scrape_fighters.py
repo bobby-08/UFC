@@ -11,10 +11,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from ufc_scraper.scrapers.fighters import UFCStatsFightersScraper
+from ufc_scraper.storage import build_raw_output_path
 
 
 def main() -> None:
-    output_path = ROOT / "data" / "raw" / "fighters.json"
+    output_path = build_raw_output_path("fighters", "fighters.json")
 
     scraper = UFCStatsFightersScraper()
     fighters = asyncio.run(scraper.scrape_all_fighters_async())

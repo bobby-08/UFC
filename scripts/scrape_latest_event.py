@@ -10,10 +10,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from ufc_scraper.scrapers.events import UFCStatsEventsScraper
+from ufc_scraper.storage import build_raw_output_path
 
 
 def main() -> None:
-    output_path = ROOT / "data" / "raw" / "latest_event.json"
+    output_path = build_raw_output_path("events", "latest_event.json")
 
     scraper = UFCStatsEventsScraper()
     latest_event, main_event = asyncio.run(scraper.scrape_latest_event_async())
