@@ -63,6 +63,11 @@ def build_parser() -> argparse.ArgumentParser:
     source.add_argument("--html", type=Path, help="Saved fight-details HTML file")
     parser.add_argument("--fight-url", help="Fight URL to write into the output when parsing HTML")
     parser.add_argument("--output", type=Path, help="Output JSON path")
+    parser.add_argument(
+        "--track-pipeline",
+        action="store_true",
+        help="Record the extraction run in DuckDB (disabled by default)",
+    )
     return parser
 
 
@@ -72,19 +77,57 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.latest_event:
         output_path = args.output or build_raw_output_path("fight_details", "latest_event_fight_details.json")
-        totals_count, sig_count = asyncio.run(write_json_from_latest_event_async(output_path))
         fight_url = "latest event fight"
     elif args.url:
         fight_url = args.url
         output_path = args.output or default_output_path(fight_url)
-        totals_count, sig_count = asyncio.run(write_json_from_url_async(fight_url, output_path))
     else:
         if not args.fight_url:
             parser.error("--fight-url is required when using --html")
         fight_url = args.fight_url
         output_path = args.output or default_output_path(fight_url)
-        html = args.html.read_text(encoding="utf-8")
-        totals_count, sig_count = write_json_from_html(html, fight_url, output_path)
+
+    connection_context = get_connection() if args.track_pipeline else None
+    if connection_context is None:
+        if args.latest_event:
+            totals_count, sig_count = asyncio.run(write_json_from_latest_event_async(output_path))
+        elif args.url:
+            totals_count, sig_count = asyncio.run(write_json_from_url_async(fight_url, output_path))
+        else:
+            html = args.html.read_text(encoding="utf-8")
+            totals_count, sig_count = write_json_from_html(html, fight_url, output_path)
+    else:
+        from ufc_scraper.db import (
+            create_schema,
+            finish_pipeline_run_failure,
+            finish_pipeline_run_success,
+            get_connection,
+            register_pipeline_file,
+            start_pipeline_run,
+        )
+
+        with connection_context as connection:
+            create_schema(connection)
+            run = start_pipeline_run(connection, dataset_name="fight_details", source_url=fight_url)
+            try:
+                if args.latest_event:
+                    totals_count, sig_count = asyncio.run(write_json_from_latest_event_async(output_path))
+                elif args.url:
+                    totals_count, sig_count = asyncio.run(write_json_from_url_async(fight_url, output_path))
+                else:
+                    html = args.html.read_text(encoding="utf-8")
+                    totals_count, sig_count = write_json_from_html(html, fight_url, output_path)
+
+                register_pipeline_file(connection, run.run_id, "fight_details", output_path)
+                finish_pipeline_run_success(
+                    connection,
+                    run.run_id,
+                    output_path=output_path,
+                    record_count=totals_count + sig_count,
+                )
+            except Exception as exc:
+                finish_pipeline_run_failure(connection, run.run_id, exc, output_path=output_path)
+                raise
 
     print(f"Saved {totals_count + sig_count} rows to {output_path}")
     print(f"Totals rows: {totals_count}")

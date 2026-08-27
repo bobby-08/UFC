@@ -114,6 +114,37 @@ CREATE TABLE IF NOT EXISTS fight_significant_strikes (
 """
 
 
+PIPELINE_RUNS_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS pipeline_runs (
+    run_id VARCHAR PRIMARY KEY,
+    dataset_name VARCHAR NOT NULL,
+    source_url VARCHAR,
+    status VARCHAR NOT NULL,
+    started_at TIMESTAMP NOT NULL,
+    finished_at TIMESTAMP,
+    output_path VARCHAR,
+    record_count INTEGER,
+    error_type VARCHAR,
+    error_message VARCHAR,
+    traceback VARCHAR
+);
+"""
+
+
+PIPELINE_FILES_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS pipeline_files (
+    file_id VARCHAR PRIMARY KEY,
+    run_id VARCHAR NOT NULL,
+    dataset_name VARCHAR NOT NULL,
+    file_path VARCHAR NOT NULL,
+    file_name VARCHAR NOT NULL,
+    file_size_bytes BIGINT,
+    file_checksum VARCHAR,
+    created_at TIMESTAMP NOT NULL
+);
+"""
+
+
 def create_fighters_table(
     connection: duckdb.DuckDBPyConnection | None = None,
     db_path: str | Path = DEFAULT_DB_PATH,
@@ -192,6 +223,32 @@ def create_fight_significant_strikes_table(
     connection.execute(FIGHT_SIGNIFICANT_STRIKES_TABLE_SQL)
 
 
+def create_pipeline_runs_table(
+    connection: duckdb.DuckDBPyConnection | None = None,
+    db_path: str | Path = DEFAULT_DB_PATH,
+) -> None:
+    """Create the pipeline runs audit table in DuckDB if it does not already exist."""
+    if connection is None:
+        with get_connection(db_path) as managed_connection:
+            managed_connection.execute(PIPELINE_RUNS_TABLE_SQL)
+        return
+
+    connection.execute(PIPELINE_RUNS_TABLE_SQL)
+
+
+def create_pipeline_files_table(
+    connection: duckdb.DuckDBPyConnection | None = None,
+    db_path: str | Path = DEFAULT_DB_PATH,
+) -> None:
+    """Create the pipeline files audit table in DuckDB if it does not already exist."""
+    if connection is None:
+        with get_connection(db_path) as managed_connection:
+            managed_connection.execute(PIPELINE_FILES_TABLE_SQL)
+        return
+
+    connection.execute(PIPELINE_FILES_TABLE_SQL)
+
+
 def create_fights_table(
     connection: duckdb.DuckDBPyConnection | None = None,
     db_path: str | Path = DEFAULT_DB_PATH,
@@ -211,3 +268,5 @@ def create_schema(
     create_fights_summary_table(connection=connection, db_path=db_path)
     create_fight_totals_table(connection=connection, db_path=db_path)
     create_fight_significant_strikes_table(connection=connection, db_path=db_path)
+    create_pipeline_runs_table(connection=connection, db_path=db_path)
+    create_pipeline_files_table(connection=connection, db_path=db_path)

@@ -38,6 +38,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Export UFCStats fight summary to JSON")
     parser.add_argument("--url", required=True, help="Fight-details page URL")
     parser.add_argument("--output", type=Path, help="Output JSON path")
+    parser.add_argument("--track-pipeline", action="store_true", help="Record the run in DuckDB")
     return parser
 
 
@@ -47,9 +48,20 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     fight_url = args.url
     output_path = args.output or default_output_path(fight_url)
-
-    payload = asyncio.run(write_json_from_url_async(fight_url, output_path))
-
+    if not args.track_pipeline:
+        payload = asyncio.run(write_json_from_url_async(fight_url, output_path))
+    else:
+        from ufc_scraper.db import create_schema, finish_pipeline_run_failure, finish_pipeline_run_success, get_connection, register_pipeline_file, start_pipeline_run
+        with get_connection() as connection:
+            create_schema(connection)
+            run = start_pipeline_run(connection, dataset_name="fight_summary", source_url=fight_url)
+            try:
+                payload = asyncio.run(write_json_from_url_async(fight_url, output_path))
+                register_pipeline_file(connection, run.run_id, "fight_summary", output_path)
+                finish_pipeline_run_success(connection, run.run_id, output_path=output_path, record_count=1)
+            except Exception as exc:
+                finish_pipeline_run_failure(connection, run.run_id, exc, output_path=output_path)
+                raise
     print(json.dumps(payload, indent=2))
     print(f"Saved to {output_path}")
     return 0

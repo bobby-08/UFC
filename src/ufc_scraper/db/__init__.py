@@ -1,4 +1,14 @@
 from .connection import DEFAULT_DB_PATH, get_connection
+from .load import load_fight_details_staging
+from .pipeline import (
+    PipelineRun,
+    checksum_file,
+    ensure_pipeline_audit_tables,
+    finish_pipeline_run_failure,
+    finish_pipeline_run_success,
+    register_pipeline_file,
+    start_pipeline_run,
+)
 from .schema import (
     EVENT_FIGHTS_TABLE_SQL,
     EVENTS_TABLE_SQL,
@@ -6,6 +16,8 @@ from .schema import (
     FIGHT_TOTALS_TABLE_SQL,
     FIGHTS_SUMMARY_TABLE_SQL,
     FIGHTERS_TABLE_SQL,
+    PIPELINE_FILES_TABLE_SQL,
+    PIPELINE_RUNS_TABLE_SQL,
     create_event_fights_table,
     create_events_table,
     create_fight_significant_strikes_table,
@@ -13,17 +25,22 @@ from .schema import (
     create_fights_summary_table,
     create_fighters_table,
     create_fights_table,
+    create_pipeline_files_table,
+    create_pipeline_runs_table,
     create_schema,
 )
 
 __all__ = [
     "DEFAULT_DB_PATH",
+    "PipelineRun",
     "EVENT_FIGHTS_TABLE_SQL",
     "EVENTS_TABLE_SQL",
     "FIGHT_SIGNIFICANT_STRIKES_TABLE_SQL",
     "FIGHT_TOTALS_TABLE_SQL",
     "FIGHTS_SUMMARY_TABLE_SQL",
     "FIGHTERS_TABLE_SQL",
+    "PIPELINE_FILES_TABLE_SQL",
+    "PIPELINE_RUNS_TABLE_SQL",
     "create_event_fights_table",
     "create_events_table",
     "create_fight_significant_strikes_table",
@@ -31,6 +48,15 @@ __all__ = [
     "create_fights_summary_table",
     "create_fighters_table",
     "create_fights_table",
+    "create_pipeline_files_table",
+    "create_pipeline_runs_table",
     "create_schema",
+    "checksum_file",
+    "ensure_pipeline_audit_tables",
+    "finish_pipeline_run_failure",
+    "finish_pipeline_run_success",
+    "register_pipeline_file",
+    "start_pipeline_run",
     "get_connection",
+    "load_fight_details_staging",
 ]

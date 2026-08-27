@@ -1,0 +1,19 @@
+{
+  "event": {
+    "event_link": "http://www.ufcstats.com/event-details/a0a69dc9914ef6e1",
+    "event_name": "UFC Fight Night: Hernandez vs. Rodrigues",
+    "event_date": "August 22, 2026",
+    "event_location": "Sacramento, California, USA"
+  },
+  "main_event": {
+    "fight_link": "http://www.ufcstats.com/fight-details/fb77b08a90b92d5b",
+    "fighter_1": "Gregory Rodrigues",
+    "fighter_2": "Anthony Hernandez",
+    "result_fighter_1": "W",
+    "result_fighter_2": "L",
+    "weight_class": "Middleweight",
+    "method": "U-DEC",
+    "round": "5",
+    "time": "5:00"
+  }
+}
