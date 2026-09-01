@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from ufc_scraper.scrapers.events import UFCStatsEventsScraper
-from ufc_scraper.storage import build_raw_output_path
+from ufc_scraper.storage import build_raw_output_path, scraped_timestamp, url_identifier
 
 
 def main() -> None:
@@ -38,8 +38,11 @@ def main() -> None:
                     "method": main_event.method,
                     "round": main_event.round,
                     "time": main_event.time,
-                },
-            }
+        },
+    }
+    payload["scraped_at"] = scraped_timestamp()
+    payload["event_id"] = url_identifier(latest_event.event_link, "/event-details/")
+    payload["fight_id"] = url_identifier(main_event.fight_link, "/fight-details/")
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")

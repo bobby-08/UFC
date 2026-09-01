@@ -142,6 +142,11 @@ def validate_fight_details(payload: Any, file_path: str | Path = "<memory>") -> 
     url = urlparse(str(payload.get("fight_url", "")))
     if url.scheme not in {"http", "https"} or url.netloc.lower() not in {"ufcstats.com", "www.ufcstats.com"} or not url.path.startswith("/fight-details/"):
         _add(report, "error", "invalid_fight_url", "URL is not a UFCStats fight-details URL", "fight_url")
+    event_url = payload.get("event_url")
+    if not isinstance(event_url, str) or not event_url.strip():
+        _add(report, "warning", "missing_event_url", "Parent event URL is missing; it must be resolved from a related summary before staging", "event_url")
+    elif not _valid_parent_event_url(event_url):
+        _add(report, "error", "invalid_event_url", "Not a UFCStats event-details URL", "event_url")
 
     totals = _section(report, payload, "totals", TOTALS_FIELDS)
     sigs = _section(report, payload, "significant_strikes", SIG_FIELDS)
@@ -171,6 +176,11 @@ def validate_fight_details(payload: Any, file_path: str | Path = "<memory>") -> 
                     if breakdown and (breakdown[0] > overall[0] or breakdown[1] > overall[1]):
                         _add(report, "error", "breakdown_exceeds_total", f"{area} exceeds sig_str", f"significant_strikes[{index}]")
     return report
+
+
+def _valid_parent_event_url(value: str) -> bool:
+    parsed = urlparse(value)
+    return parsed.scheme in {"http", "https"} and parsed.netloc.lower() in {"ufcstats.com", "www.ufcstats.com"} and parsed.path.startswith("/event-details/")
 
 
 def validate_fight_details_file(path: str | Path) -> ValidationReport:

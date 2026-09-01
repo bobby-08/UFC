@@ -97,6 +97,13 @@ class UFCStatsFightsDetailsScraper:
     def __init__(self, client: UFCStatsClient | None = None, parser: UFCStatsParser | None = None) -> None:
         self.client = client or UFCStatsClient(headless=False, persistent_profile=True)
         self.parser = parser or UFCStatsParser()
+        self.event_link = ""
+
+    def parse_event_link(self, html: str) -> str:
+        """Extract the parent event URL shown on a fight-details page."""
+        soup = self.parser.soup(html)
+        event_link = soup.select_one("h2.b-content__title a.b-link")
+        return self.parser.attr(event_link, "href")
 
     def _normalize_round_label(self, label: str) -> str:
         text = " ".join(label.split())
@@ -308,6 +315,7 @@ class UFCStatsFightsDetailsScraper:
             await self._expand_round_sections_async(client.page)
             html = await client.page.content()
 
+        self.event_link = self.parse_event_link(html)
         totals = self.parse_totals(html, fight_url=fight_url)
         sigs = self.parse_significant_strikes(html, fight_url=fight_url)
         return totals, sigs
@@ -389,11 +397,13 @@ def build_fight_details_payload(
     fight_url: str,
     totals: List[TotalsRow],
     sigs: List[SignificantStrikesRow],
+    event_url: str = "",
 ) -> dict[str, object]:
     totals_payload = [asdict(row) for row in format_totals_rows_for_json(totals)]
     sigs_payload = [asdict(row) for row in format_significant_strikes_rows_for_json(sigs)]
     return {
         "fight_url": fight_url,
+        "event_url": event_url,
         "totals": totals_payload,
         "significant_strikes": sigs_payload,
     }

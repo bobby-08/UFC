@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from ufc_scraper.scrapers.fighters import UFCStatsFightersScraper
-from ufc_scraper.storage import build_raw_output_path
+from ufc_scraper.storage import build_raw_output_path, scraped_timestamp
 
 
 def main() -> None:
@@ -23,7 +23,11 @@ def main() -> None:
     scraper = UFCStatsFightersScraper()
     fighters = asyncio.run(scraper.scrape_all_fighters_async())
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    payload = [asdict(fighter) for fighter in fighters]
+    scraped_at = scraped_timestamp()
+    payload = [
+        {**asdict(fighter), "scraped_at": scraped_at, "event_id": None, "fight_id": None}
+        for fighter in fighters
+    ]
     output_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     if args.track_pipeline:
         from ufc_scraper.db import create_schema, finish_pipeline_run_success, get_connection, register_pipeline_file, start_pipeline_run

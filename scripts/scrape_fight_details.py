@@ -14,7 +14,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from ufc_scraper.scrapers.events import UFCStatsEventsScraper
 from ufc_scraper.scrapers.fights_details import UFCStatsFightsDetailsScraper, build_fight_details_payload
-from ufc_scraper.storage import build_raw_output_path
+from ufc_scraper.storage import build_raw_output_path, scraped_timestamp, url_identifier
 
 
 def default_output_path(fight_url: str) -> Path:
@@ -24,8 +24,11 @@ def default_output_path(fight_url: str) -> Path:
     return build_raw_output_path("fight_details", f"fight_details_{fight_id}.json")
 
 
-def write_json_payload(totals, sigs, fight_url: str, output_path: Path) -> tuple[int, int]:
-    payload = build_fight_details_payload(fight_url, totals, sigs)
+def write_json_payload(totals, sigs, fight_url: str, output_path: Path, event_url: str = "") -> tuple[int, int]:
+    payload = build_fight_details_payload(fight_url, totals, sigs, event_url=event_url)
+    payload["scraped_at"] = scraped_timestamp()
+    payload["event_id"] = url_identifier(event_url, "/event-details/")
+    payload["fight_id"] = url_identifier(fight_url, "/fight-details/")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     return len(payload["totals"]), len(payload["significant_strikes"])
@@ -35,13 +38,13 @@ def write_json_from_html(html: str, fight_url: str, output_path: Path) -> tuple[
     scraper = UFCStatsFightsDetailsScraper()
     totals = scraper.parse_totals(html, fight_url=fight_url)
     sigs = scraper.parse_significant_strikes(html, fight_url=fight_url)
-    return write_json_payload(totals, sigs, fight_url, output_path)
+    return write_json_payload(totals, sigs, fight_url, output_path, event_url=scraper.parse_event_link(html))
 
 
 async def write_json_from_url_async(fight_url: str, output_path: Path) -> tuple[int, int]:
     scraper = UFCStatsFightsDetailsScraper()
     totals, sigs = await scraper.scrape_fight_details_async(fight_url)
-    return write_json_payload(totals, sigs, fight_url, output_path)
+    return write_json_payload(totals, sigs, fight_url, output_path, event_url=scraper.event_link)
 
 
 async def write_json_from_latest_event_async(output_path: Path) -> tuple[int, int]:

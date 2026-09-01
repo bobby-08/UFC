@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from ufc_scraper.scrapers.fights_summary import UFCStatsFightSummaryScraper
-from ufc_scraper.storage import build_raw_output_path
+from ufc_scraper.storage import build_raw_output_path, scraped_timestamp, url_identifier
 
 
 def default_output_path(fight_url: str) -> Path:
@@ -29,6 +29,9 @@ async def write_json_from_url_async(fight_url: str, output_path: Path) -> dict[s
     row = await scraper.scrape_fight_summary_async(fight_url)
 
     payload = asdict(row)
+    payload["scraped_at"] = scraped_timestamp()
+    payload["event_id"] = url_identifier(payload.get("event_link"), "/event-details/")
+    payload["fight_id"] = url_identifier(payload.get("fight_link"), "/fight-details/")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     return payload
