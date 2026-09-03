@@ -46,6 +46,14 @@ def _metadata(
     }
 
 
+def _scraped_at(value: Any, source_file: Path) -> Any:
+    """Use the extractor timestamp, or the legacy raw timestamp folder."""
+    if isinstance(value, str) and value.strip():
+        return value
+    parent_timestamp = source_file.parent.name
+    return parent_timestamp if parent_timestamp else None
+
+
 def _data_with_metadata(row: dict[str, Any], metadata: dict[str, Any]) -> dict[str, Any]:
     data = {key: value for key, value in row.items() if key not in {"scraped_at", "ingested_at", "event_id", "fight_id"}}
     data.update(metadata)
@@ -65,25 +73,21 @@ def _stage_fighters(files: list[Path], category: str, staged_at: datetime, inges
         report = validate_fighters_file(path)
         if not report.valid:
             raise ValueError(f"Invalid fighters file {path}: " + "; ".join(x.message for x in report.errors))
-        rows.extend(_data_with_metadata(row, _metadata(row.get("scraped_at"), None, None, ingested_at)) for row in _json(path))
+        rows.extend(_data_with_metadata(row, _metadata(_scraped_at(row.get("scraped_at"), path), None, None, ingested_at)) for row in _json(path))
     return {"fighters": _write(rows, category, "fighters.parquet", staged_at)}
 
 
 def _stage_events(files: list[Path], category: str, staged_at: datetime, ingested_at: str) -> dict[str, Path]:
     events: list[dict[str, Any]] = []
-    main_events: list[dict[str, Any]] = []
     for path in files:
         report = validate_events_file(path)
         if not report.valid:
             raise ValueError(f"Invalid events file {path}: " + "; ".join(x.message for x in report.errors))
         payload = _json(path)
-        metadata = _metadata(payload.get("scraped_at"), payload["event"].get("event_link"), payload["main_event"].get("fight_link"), ingested_at)
+        metadata = _metadata(_scraped_at(payload.get("scraped_at"), path), payload["event"].get("event_link"), None, ingested_at)
+        metadata.pop("fight_id")
         events.append(_data_with_metadata(payload["event"], metadata))
-        main_events.append(_data_with_metadata(payload["main_event"], metadata))
-    return {
-        "events": _write(events, category, "events.parquet", staged_at),
-        "main_events": _write(main_events, category, "main_events.parquet", staged_at),
-    }
+    return {"events": _write(events, category, "events.parquet", staged_at)}
 
 
 def _stage_summaries(files: list[Path], category: str, staged_at: datetime, ingested_at: str) -> dict[str, Path]:
@@ -93,7 +97,7 @@ def _stage_summaries(files: list[Path], category: str, staged_at: datetime, inge
         if not report.valid:
             raise ValueError(f"Invalid fight-summary file {path}: " + "; ".join(x.message for x in report.errors))
         payload = _json(path)
-        rows.append(_data_with_metadata(payload, _metadata(payload.get("scraped_at"), payload.get("event_link"), payload.get("fight_link"), ingested_at)))
+        rows.append(_data_with_metadata(payload, _metadata(_scraped_at(payload.get("scraped_at"), path), payload.get("event_link"), payload.get("fight_link"), ingested_at)))
     return {"fight_summary": _write(rows, category, "fight_summary.parquet", staged_at)}
 
 
@@ -115,7 +119,7 @@ def _stage_details(files: list[Path], category: str, staged_at: datetime, ingest
         event_url = payload.get("event_url") or event_by_fight.get(payload.get("fight_url"))
         if not event_url:
             raise ValueError(f"Could not resolve parent event for fight {payload.get('fight_url')} from fight summaries")
-        metadata = _metadata(payload.get("scraped_at"), event_url, payload.get("fight_url"), ingested_at)
+        metadata = _metadata(_scraped_at(payload.get("scraped_at"), path), event_url, payload.get("fight_url"), ingested_at)
         totals.extend(_data_with_metadata(row, metadata) for row in payload["totals"])
         significant_strikes.extend(_data_with_metadata(row, metadata) for row in payload["significant_strikes"])
     return {

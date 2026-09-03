@@ -17,10 +17,14 @@ def main() -> None:
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--track-pipeline", action="store_true", help="Record the run in DuckDB")
+    parser.add_argument("--event-url", help="Extract this specific event instead of the latest event")
     args = parser.parse_args()
     output_path = build_raw_output_path("events", "latest_event.json")
     scraper = UFCStatsEventsScraper()
-    latest_event, main_event = asyncio.run(scraper.scrape_latest_event_async())
+    if args.event_url:
+        latest_event = asyncio.run(scraper.scrape_event_only_async(args.event_url))
+    else:
+        latest_event, main_event = asyncio.run(scraper.scrape_latest_event_async())
     payload = {
                 "event": {
                     "event_link": latest_event.event_link,
@@ -28,21 +32,9 @@ def main() -> None:
                     "event_date": latest_event.event_date,
                     "event_location": latest_event.event_location,
                 },
-                "main_event": {
-                    "fight_link": main_event.fight_link,
-                    "fighter_1": main_event.fighter_1,
-                    "fighter_2": main_event.fighter_2,
-                    "result_fighter_1": main_event.result_fighter_1,
-                    "result_fighter_2": main_event.result_fighter_2,
-                    "weight_class": main_event.weight_class,
-                    "method": main_event.method,
-                    "round": main_event.round,
-                    "time": main_event.time,
-        },
     }
     payload["scraped_at"] = scraped_timestamp()
     payload["event_id"] = url_identifier(latest_event.event_link, "/event-details/")
-    payload["fight_id"] = url_identifier(main_event.fight_link, "/fight-details/")
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")

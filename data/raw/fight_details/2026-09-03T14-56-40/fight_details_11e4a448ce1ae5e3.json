@@ -1,0 +1,55 @@
+{
+  "fight_url": "http://www.ufcstats.com/fight-details/11e4a448ce1ae5e3",
+  "event_url": "http://www.ufcstats.com/event-details/a0a69dc9914ef6e1",
+  "totals": [
+    {
+      "round_label": "Round 1",
+      "fighter1": "Wes Schultz",
+      "kd_fighter1": "0",
+      "sig_str_fighter1": "24 of 43",
+      "sig_str_pct_fighter1": "55%",
+      "total_str_fighter1": "28 of 48",
+      "td_fighter1": "1 of 1",
+      "td_pct_fighter1": "100%",
+      "sub_att_fighter1": "1",
+      "rev_fighter1": "0",
+      "ctrl_fighter1": "1:05",
+      "fighter2": "Jackson McVey",
+      "kd_fighter2": "1",
+      "sig_str_fighter2": "38 of 78",
+      "sig_str_pct_fighter2": "48%",
+      "total_str_fighter2": "40 of 80",
+      "td_fighter2": "0 of 0",
+      "td_pct_fighter2": "---",
+      "sub_att_fighter2": "0",
+      "rev_fighter2": "0",
+      "ctrl_fighter2": "0:14"
+    }
+  ],
+  "significant_strikes": [
+    {
+      "round_label": "Round 1",
+      "fighter1": "Wes Schultz",
+      "sig_str_fighter1": "24 of 43",
+      "sig_str_pct_fighter1": "55%",
+      "head_fighter1": "11 of 27",
+      "body_fighter1": "12 of 15",
+      "leg_fighter1": "1 of 1",
+      "distance_fighter1": "20 of 37",
+      "clinch_fighter1": "4 of 6",
+      "ground_fighter1": "0 of 0",
+      "fighter2": "Jackson McVey",
+      "sig_str_fighter2": "38 of 78",
+      "sig_str_pct_fighter2": "48%",
+      "head_fighter2": "32 of 69",
+      "body_fighter2": "6 of 9",
+      "leg_fighter2": "0 of 0",
+      "distance_fighter2": "34 of 72",
+      "clinch_fighter2": "1 of 3",
+      "ground_fighter2": "3 of 3"
+    }
+  ],
+  "scraped_at": "2026-09-03T12:56:40+00:00",
+  "event_id": "a0a69dc9914ef6e1",
+  "fight_id": "11e4a448ce1ae5e3"
+}

@@ -1,0 +1,55 @@
+{
+  "fight_url": "http://www.ufcstats.com/fight-details/2bbacf9ed3c64184",
+  "event_url": "http://www.ufcstats.com/event-details/a0a69dc9914ef6e1",
+  "totals": [
+    {
+      "round_label": "Round 1",
+      "fighter1": "Jamall Emmers",
+      "kd_fighter1": "1",
+      "sig_str_fighter1": "17 of 29",
+      "sig_str_pct_fighter1": "58%",
+      "total_str_fighter1": "17 of 29",
+      "td_fighter1": "0 of 0",
+      "td_pct_fighter1": "---",
+      "sub_att_fighter1": "0",
+      "rev_fighter1": "0",
+      "ctrl_fighter1": "0:02",
+      "fighter2": "Lerryan Douglas",
+      "kd_fighter2": "0",
+      "sig_str_fighter2": "14 of 27",
+      "sig_str_pct_fighter2": "51%",
+      "total_str_fighter2": "14 of 27",
+      "td_fighter2": "0 of 0",
+      "td_pct_fighter2": "---",
+      "sub_att_fighter2": "0",
+      "rev_fighter2": "0",
+      "ctrl_fighter2": "0:00"
+    }
+  ],
+  "significant_strikes": [
+    {
+      "round_label": "Round 1",
+      "fighter1": "Jamall Emmers",
+      "sig_str_fighter1": "17 of 29",
+      "sig_str_pct_fighter1": "58%",
+      "head_fighter1": "10 of 20",
+      "body_fighter1": "2 of 3",
+      "leg_fighter1": "5 of 6",
+      "distance_fighter1": "14 of 25",
+      "clinch_fighter1": "1 of 1",
+      "ground_fighter1": "2 of 3",
+      "fighter2": "Lerryan Douglas",
+      "sig_str_fighter2": "14 of 27",
+      "sig_str_pct_fighter2": "51%",
+      "head_fighter2": "6 of 17",
+      "body_fighter2": "1 of 2",
+      "leg_fighter2": "7 of 8",
+      "distance_fighter2": "14 of 25",
+      "clinch_fighter2": "0 of 2",
+      "ground_fighter2": "0 of 0"
+    }
+  ],
+  "scraped_at": "2026-09-03T12:55:44+00:00",
+  "event_id": "a0a69dc9914ef6e1",
+  "fight_id": "2bbacf9ed3c64184"
+}
