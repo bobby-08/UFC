@@ -1,0 +1,32 @@
+[raw]
+root = "data/raw"
+events = "data/raw/events"
+fighters = "data/raw/fighters"
+fight_summary = "data/raw/fight_summary"
+fight_details = "data/raw/fight_details"
+
+[staging]
+root = "data/staging"
+events = "data/staging/events/*/events.parquet"
+fighters = "data/staging/fighters/*/fighters.parquet"
+fight_summary = "data/staging/fight_summary/*/fight_summary.parquet"
+totals = "data/staging/fight_details/*/totals.parquet"
+significant_strikes = "data/staging/fight_details/*/significant_strikes.parquet"
+
+[transformation]
+root = "data/processed"
+events = "data/processed/events/*/events.parquet"
+fighters = "data/processed/fighters/*/fighters.parquet"
+fighter_stats = "data/processed/fighter_stats/*/fighter_stats.parquet"
+fight_summary = "data/processed/fight_summary/*/fight_summary.parquet"
+totals = "data/processed/totals/*/totals.parquet"
+significant_strikes = "data/processed/significant_strikes/*/significant_strikes.parquet"
+
+[logs]
+root = "logs"
+scrape = "logs/scrape"
+validation = "logs/validation"
+staging = "logs/staging"
+transform = "logs/transform"
+database = "logs/database"
+pipeline = "logs/pipeline"

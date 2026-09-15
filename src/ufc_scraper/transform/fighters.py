@@ -1,11 +1,24 @@
+from datetime import datetime, timezone
+
 import polars as pl
-from utils.standardisation import standardize_dataframe
+from ..utils.standardisation import standardize_dataframe
+from ._common import read_staging, schema_values, write_transformation
+
+_SCHEMA = schema_values("fighters.toml")
+FIGHTER_COLS = _SCHEMA["FIGHTER_COLS"]
+FIGHTER_STATS_COLS = _SCHEMA["FIGHTER_STATS_COLS"]
 
 def transform_fighters(
-    fighters: pl.DataFrame,
+    fighters: pl.DataFrame | str | None = None,
 ) -> pl.DataFrame:
 
-    return (
+    if fighters is None:
+        fighters = read_staging("fighters")
+    elif not isinstance(fighters, pl.DataFrame):
+        fighters = pl.read_parquet(fighters)
+    fighters = standardize_dataframe(fighters, empty_to_null=True)
+
+    transformed = (
         fighters
         .with_columns(
 
@@ -82,14 +95,57 @@ def transform_fighters(
                 format="%Y-%m-%dT%H:%M:%S%z"
             ),
         )
-        .select(FIGHTER_COLS)
     )
-    
-fighters_clean = (
-    fighters
-    .pipe(
-        standardize_dataframe,
-        empty_to_null=True,
+
+    return transformed.select(FIGHTER_COLS)
+
+
+def transform_fighter_stats(fighters: pl.DataFrame | str | None = None) -> pl.DataFrame:
+    """Return cumulative fighter records separately from descriptive attributes."""
+    if fighters is None:
+        fighters = read_staging("fighters")
+    elif not isinstance(fighters, pl.DataFrame):
+        fighters = pl.read_parquet(fighters)
+
+    # Rebuild the derived cumulative columns from the standardized input because
+    # transform_fighters intentionally returns only descriptive columns.
+    source = standardize_dataframe(fighters, empty_to_null=True)
+    return (
+        source
+        .with_columns(
+            pl.col("wins").cast(pl.Int64, strict=False),
+            pl.col("losses").cast(pl.Int64, strict=False),
+            pl.col("draws").cast(pl.Int64, strict=False),
+            pl.col("belt").str.len_chars().gt(0).alias("belt"),
+            pl.col("fighter_id").str.strip_chars(),
+            pl.col("scraped_at").str.to_datetime(format="%Y-%m-%dT%H:%M:%S%z"),
+            pl.col("ingested_at").str.to_datetime(format="%Y-%m-%dT%H:%M:%S%z"),
+        )
+        .select(FIGHTER_STATS_COLS)
     )
-    .pipe(transform_fighters)
-)
+
+def transform_fighters_from_staging(path: str | None = None) -> pl.DataFrame:
+    return transform_fighters(read_staging("fighters", path))
+
+
+def transform_fighter_outputs_from_staging(path: str | None = None) -> dict[str, pl.DataFrame]:
+    fighters = read_staging("fighters", path)
+    return {
+        "fighters": transform_fighters(fighters),
+        "fighter_stats": transform_fighter_stats(fighters),
+    }
+
+
+def save_transformed_fighters(path: str | None = None):
+    outputs = transform_fighter_outputs_from_staging(path)
+    transformed_at = datetime.now(timezone.utc)
+    return {
+        name: write_transformation(frame, name, transformed_at=transformed_at)
+        for name, frame in outputs.items()
+    }
+
+
+__all__ = [
+    "transform_fighters", "transform_fighter_stats", "transform_fighters_from_staging",
+    "transform_fighter_outputs_from_staging", "save_transformed_fighters",
+]

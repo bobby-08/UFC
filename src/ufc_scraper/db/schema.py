@@ -7,6 +7,138 @@ import duckdb
 from .connection import DEFAULT_DB_PATH, get_connection
 
 
+# These tables mirror the files written by the transformation layer. They are
+# rebuilt from data/processed on each load so the database is reproducible from
+# the processed Parquet outputs and never depends on raw or staging files.
+TRANSFORMED_EVENTS_TABLE_SQL = """
+CREATE TABLE events (
+    event_id VARCHAR PRIMARY KEY,
+    event_name VARCHAR,
+    event_date DATE,
+    event_location VARCHAR,
+    scraped_at TIMESTAMPTZ,
+    ingested_at TIMESTAMPTZ,
+    transformed_at TIMESTAMPTZ
+);
+"""
+
+TRANSFORMED_FIGHTERS_TABLE_SQL = """
+CREATE TABLE fighters (
+    fighter_id VARCHAR PRIMARY KEY,
+    fighter_name VARCHAR,
+    nickname VARCHAR,
+    height_inches DOUBLE,
+    weight_lbs DOUBLE,
+    reach_inches DOUBLE,
+    stance VARCHAR,
+    scraped_at TIMESTAMPTZ,
+    ingested_at TIMESTAMPTZ,
+    transformed_at TIMESTAMPTZ
+);
+"""
+
+FIGHTER_STATS_TABLE_SQL = """
+CREATE TABLE fighter_stats (
+    fighter_id VARCHAR PRIMARY KEY,
+    wins BIGINT,
+    losses BIGINT,
+    draws BIGINT,
+    belt BOOLEAN,
+    scraped_at TIMESTAMPTZ,
+    ingested_at TIMESTAMPTZ,
+    transformed_at TIMESTAMPTZ
+);
+"""
+
+TRANSFORMED_FIGHT_SUMMARY_TABLE_SQL = """
+CREATE TABLE fight_summary (
+    fight_id VARCHAR,
+    event_id VARCHAR,
+    event_name VARCHAR,
+    bout_type VARCHAR,
+    method VARCHAR,
+    round BIGINT,
+    time VARCHAR,
+    time_seconds BIGINT,
+    time_format VARCHAR,
+    referee VARCHAR,
+    details VARCHAR,
+    scraped_at TIMESTAMPTZ,
+    ingested_at TIMESTAMPTZ,
+    winner VARCHAR,
+    loser VARCHAR,
+    fighter VARCHAR,
+    opponent VARCHAR,
+    fighter_result VARCHAR,
+    nickname VARCHAR,
+    transformed_at TIMESTAMPTZ,
+    PRIMARY KEY (fight_id, fighter)
+);
+"""
+
+TRANSFORMED_TOTALS_TABLE_SQL = """
+CREATE TABLE totals (
+    fight_id VARCHAR,
+    event_id VARCHAR,
+    round BIGINT,
+    scraped_at TIMESTAMPTZ,
+    ingested_at TIMESTAMPTZ,
+    fighter VARCHAR,
+    opponent VARCHAR,
+    sig_str_landed BIGINT,
+    sig_str_attempted BIGINT,
+    total_str_landed BIGINT,
+    total_str_attempted BIGINT,
+    td_landed BIGINT,
+    td_attempted BIGINT,
+    sig_str_pct DOUBLE,
+    td_pct DOUBLE,
+    total_str_pct DOUBLE,
+    kd BIGINT,
+    sub_att BIGINT,
+    rev BIGINT,
+    ctrl_seconds BIGINT,
+    transformed_at TIMESTAMPTZ,
+    PRIMARY KEY (fight_id, round, fighter)
+);
+"""
+
+TRANSFORMED_SIGNIFICANT_STRIKES_TABLE_SQL = """
+CREATE TABLE significant_strikes (
+    fight_id VARCHAR,
+    event_id VARCHAR,
+    round BIGINT,
+    scraped_at TIMESTAMPTZ,
+    ingested_at TIMESTAMPTZ,
+    fighter VARCHAR,
+    opponent VARCHAR,
+    sig_str_landed BIGINT,
+    sig_str_attempted BIGINT,
+    sig_str_pct DOUBLE,
+    head_landed BIGINT,
+    head_attempted BIGINT,
+    head_pct DOUBLE,
+    body_landed BIGINT,
+    body_attempted BIGINT,
+    body_pct DOUBLE,
+    leg_landed BIGINT,
+    leg_attempted BIGINT,
+    leg_pct DOUBLE,
+    distance_landed BIGINT,
+    distance_attempted BIGINT,
+    distance_pct DOUBLE,
+    clinch_landed BIGINT,
+    clinch_attempted BIGINT,
+    clinch_pct DOUBLE,
+    ground_landed BIGINT,
+    ground_attempted BIGINT,
+    ground_pct DOUBLE,
+    transformed_at TIMESTAMPTZ,
+    PRIMARY KEY (fight_id, round, fighter)
+);
+"""
+
+
 FIGHTERS_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS fighters (
     fighter_id VARCHAR PRIMARY KEY,
@@ -261,12 +393,33 @@ def create_schema(
     connection: duckdb.DuckDBPyConnection | None = None,
     db_path: str | Path = DEFAULT_DB_PATH,
 ) -> None:
-    """Create the current DuckDB schema for the UFC project."""
-    create_fighters_table(connection=connection, db_path=db_path)
-    create_events_table(connection=connection, db_path=db_path)
-    create_event_fights_table(connection=connection, db_path=db_path)
-    create_fights_summary_table(connection=connection, db_path=db_path)
-    create_fight_totals_table(connection=connection, db_path=db_path)
-    create_fight_significant_strikes_table(connection=connection, db_path=db_path)
+    """Create the processed-data and pipeline-audit DuckDB schema."""
+    create_transformed_schema(connection=connection, db_path=db_path)
     create_pipeline_runs_table(connection=connection, db_path=db_path)
     create_pipeline_files_table(connection=connection, db_path=db_path)
+
+
+def create_transformed_schema(
+    connection: duckdb.DuckDBPyConnection | None = None,
+    db_path: str | Path = DEFAULT_DB_PATH,
+) -> None:
+    """Recreate tables to match the current processed Parquet schemas."""
+    statements = {
+        "events": TRANSFORMED_EVENTS_TABLE_SQL,
+        "fighters": TRANSFORMED_FIGHTERS_TABLE_SQL,
+        "fighter_stats": FIGHTER_STATS_TABLE_SQL,
+        "fight_summary": TRANSFORMED_FIGHT_SUMMARY_TABLE_SQL,
+        "totals": TRANSFORMED_TOTALS_TABLE_SQL,
+        "significant_strikes": TRANSFORMED_SIGNIFICANT_STRIKES_TABLE_SQL,
+    }
+
+    def create(target: duckdb.DuckDBPyConnection) -> None:
+        for table, statement in statements.items():
+            target.execute(f'DROP TABLE IF EXISTS "{table}"')
+            target.execute(statement)
+
+    if connection is None:
+        with get_connection(db_path) as managed_connection:
+            create(managed_connection)
+    else:
+        create(connection)

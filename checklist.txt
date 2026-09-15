@@ -1,0 +1,182 @@
+UFC SCRAPER PROJECT CHECKLIST
+==============================
+
+Legend
+------
+[x] Completed
+[ ] Remaining work
+
+
+1. Project structure and configuration
+--------------------------------------
+[x] Keep reusable application code under src/ufc_scraper.
+[x] Keep executable workflow entry points under scripts/.
+[x] Keep raw, staging, and processed data under data/.
+[x] Keep obsolete/debug scripts under scripts/unused scripts/.
+[x] Add central path configuration in src/ufc_scraper/config/paths.toml.
+[x] Load configured paths through src/ufc_scraper/config/__init__.py.
+[x] Centralize raw and staging roots for storage and staging readers.
+[x] Centralize processed transformation output paths.
+[ ] Add project packaging metadata (for example pyproject.toml) and install the package in editable mode.
+[ ] Add a documented environment/dependency setup procedure.
+
+
+2. Raw extraction / scraping
+----------------------------
+[x] Implement event scraping.
+[x] Implement fighter scraping.
+[x] Implement fight-summary scraping.
+[x] Implement fight-details scraping.
+[x] Save scraped JSON responses under timestamped data/raw subfolders.
+[x] Add scrape scripts for events, fighters, fight summaries, and fight details.
+[x] Add scrape timestamps to raw records.
+[x] Keep the primary fighter entry point as scripts/scrape_fighters.py.
+[x] Move the duplicate async fighter script to scripts/unused scripts/.
+[ ] Add retry and backoff handling for transient HTTP/browser failures.
+[ ] Standardize scraper functions so Airflow tasks can call them directly without shell-specific behavior.
+[ ] Add automated tests for raw payload creation and scraper failure cases.
+
+
+3. Raw-data validation
+----------------------
+[x] Implement validation for events.
+[x] Implement validation for fighters.
+[x] Implement validation for fight summaries.
+[x] Implement validation for fight details.
+[x] Add validation scripts under scripts/.
+[x] Make validation scripts use configured raw paths.
+[ ] Add validation reports with machine-readable output.
+[ ] Make validation tasks fail the Airflow DAG when blocking validation errors exist.
+[ ] Add automated tests for valid, invalid, and partially missing payloads.
+
+
+4. Staging layer
+-----------------
+[x] Convert validated raw JSON into string-based staging Parquet files.
+[x] Write staging files under timestamped data/staging subfolders.
+[x] Stage events, fighters, fight summaries, and fight details.
+[x] Split fight details into totals and significant_strikes staging files.
+[x] Add staging metadata such as event_id, fight_id, scraped_at, and ingested_at.
+[x] Provide configured staging readers for all datasets.
+[x] Keep scripts/stage_raw.py as the staging command-line entry point.
+[x] Move the obsolete stage_fight_details.py entry point to scripts/unused scripts/.
+[ ] Add staging-run manifests containing input files, output files, and row counts.
+[ ] Add automated tests for each staging dataset.
+
+
+5. Transformation layer
+-----------------------
+[x] Read transformation inputs from configured timestamped staging Parquet files.
+[x] Transform event dates and timestamps.
+[x] Transform fighter descriptive attributes.
+[x] Split fighter output into fighters.parquet and fighter_stats.parquet.
+[x] Transform fight summaries into fighter-level long format.
+[x] Transform totals into fighter-level long format.
+[x] Transform significant strikes into fighter-level long format.
+[x] Load transformation column definitions from TOML schema files.
+[x] Fix package-relative imports in transform modules.
+[x] Add transformed_at UTC timestamps to written processed Parquet files.
+[x] Write processed output into separate timestamped folders for:
+    - events
+    - fighters
+    - fighter_stats
+    - fight_summary
+    - totals
+    - significant_strikes
+[x] Execute the transformation layer against the current staging data.
+[ ] Add tests for transformation data types, null handling, and expected columns.
+[ ] Add checks that every processed output contains transformed_at.
+[ ] Add a processed-data manifest with source staging paths and row counts.
+
+
+6. Database loading
+--------------------
+[x] Provide DuckDB connection and schema modules.
+[x] Implement DuckDB tables matching all transformed Parquet schemas.
+[x] Load events, fighters, fighter_stats, fight_summary, totals, and significant_strikes from data/processed only.
+[x] Add scripts/load_transformed.py as the processed-data database load command.
+[x] Load all timestamped processed files with idempotent replacement semantics.
+[x] Track pipeline runs and registered pipeline files in DuckDB.
+[x] Decide that the database loads transformed data only.
+[x] Add idempotent loading/rebuild behavior.
+[ ] Add foreign-key and relationship checks between events, fights, and fighters.
+[ ] Add end-to-end tests for a complete raw-to-database run.
+
+
+7. Data quality and modeling
+----------------------------
+[x] Store source and ingestion timestamps in the data pipeline.
+[x] Normalize fighter names, text fields, dates, and datetimes.
+[x] Convert measurements and fight statistics into numeric columns.
+[x] Convert control time and round time into seconds where applicable.
+[x] Calculate landed, attempted, and percentage metrics for fight statistics.
+[x] Define stable primary keys and uniqueness constraints for every processed dataset.
+[x] Define how duplicate scrape runs are detected and handled.
+[x] Define behavior for missing, malformed, or changed source columns.
+[x] Add row-count and null-rate quality checks between pipeline stages.
+[ ] Add data dictionary documentation for all processed columns.
+
+
+8. Testing and operations
+-------------------------
+[x] Compile the Python source files successfully.
+[x] Run the transformation functions against the current staging files.
+[x] Verify processed outputs and transformed_at columns.
+[ ] Add a conventional automated test suite under tests/.
+[ ] Add test fixtures instead of relying only on local data directories.
+[ ] Add linting and formatting checks.
+[ ] Add type checking where practical.
+[ ] Add logging instead of relying only on print statements.
+[ ] Add configuration for selecting a specific staging timestamp/run.
+[ ] Add documentation for running each pipeline stage.
+
+
+9. Airflow orchestration
+------------------------
+[ ] Choose the Airflow deployment model: local, Docker Compose, managed service, or Kubernetes.
+[x] Add Airflow dependencies separately from the core application dependencies.
+[ ] Create a dedicated `dags/` directory outside `src/ufc_scraper`.
+[ ] Create one main DAG for the UFC pipeline with a clear DAG ID and owner.
+[ ] Define the schedule, start date, timezone, catchup policy, and max active runs.
+[ ] Set `catchup=False` unless historical backfills are intentionally required.
+[ ] Define DAG-level `default_args` with retries, retry delay, execution timeout, and failure callbacks.
+[ ] Add task boundaries for scrape, validation, staging, transformation, and database loading.
+[ ] Define dependencies so validation succeeds before staging, staging before transformation, and transformation before database loading.
+[ ] Use Airflow task functions or operators that call reusable `ufc_scraper` code rather than duplicating pipeline logic in DAG files.
+[ ] Pass the Airflow `dag_run.run_id` into logging and pipeline audit records.
+[ ] Add task-level structured context: dataset, logical date, run ID, input path, output path, and row count.
+[ ] Configure Airflow retries for network scraping failures and avoid retrying deterministic validation failures.
+[ ] Add task timeouts and resource limits for browser-based scraping.
+[ ] Add failure callbacks that log the traceback and notify the appropriate channel.
+[ ] Add success/failure notifications for the full DAG and critical tasks.
+[ ] Configure Airflow connections and variables for database paths, URLs, credentials, and runtime settings.
+[ ] Keep credentials in an Airflow secrets backend or connection manager; never store them in DAG code.
+[ ] Define XCom usage only for small metadata such as paths, counts, checksums, and validation status.
+[ ] Store large datasets in filesystem/object storage, not XCom.
+[ ] Add sensors or dataset scheduling if downstream tasks depend on new raw data.
+[ ] Add task-level idempotency so retries do not duplicate raw, staging, processed, or database records.
+[ ] Decide how timestamped output folders map to Airflow logical dates and run IDs.
+[ ] Add a controlled backfill procedure for historical logical dates.
+[ ] Add a rerun procedure for failed tasks without repeating successful upstream work.
+[ ] Add concurrency limits to avoid overlapping scrapes of the same source.
+[ ] Add DAG tests for task dependencies and configuration.
+[ ] Add a local command to validate and render the DAG before deployment.
+[ ] Add CI checks for DAG import errors, Python tests, linting, and type checking.
+[ ] Deploy the DAG and plugins/configuration through version control and a repeatable release process.
+[ ] Configure log retention and remote log storage for the Airflow environment.
+[ ] Document operational runbooks for failures, retries, backfills, and partial outputs.
+
+
+10. Logging
+----------
+[x] Add centralized standard-library logging configuration.
+[x] Add reusable get_logger() and stage-specific loggers.
+[x] Add console and timestamped file logging.
+[x] Add size-based log rotation and configurable retention.
+[x] Add configurable log levels through environment variables.
+[x] Add timing decorator and context manager.
+[x] Add logging to scraping, validation, staging, transformation, and database code.
+[x] Replace print-based output in active pipeline scripts with logging.
+[x] Document logging locations, levels, and recommended placement in logging.md.
+[ ] Add Airflow `dag_id`, `task_id`, `run_id`, and logical date to application log context.
+[ ] Correlate Airflow task logs with DuckDB pipeline audit records.

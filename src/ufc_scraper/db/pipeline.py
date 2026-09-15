@@ -10,6 +10,10 @@ from uuid import uuid4
 import duckdb
 
 from .schema import create_pipeline_files_table, create_pipeline_runs_table
+from ..logging import get_logger
+
+
+LOGGER = get_logger(__name__, stage="database")
 
 
 @dataclass(slots=True)
@@ -79,6 +83,7 @@ def start_pipeline_run(
             run.traceback,
         ],
     )
+    LOGGER.info("Started pipeline run_id=%s dataset=%s", run.run_id, dataset_name)
     return run
 
 
@@ -112,6 +117,7 @@ def register_pipeline_file(
             utcnow(),
         ],
     )
+    LOGGER.debug("Registered pipeline file run_id=%s path=%s", run_id, path)
     return file_id
 
 
@@ -130,6 +136,7 @@ def finish_pipeline_run_success(
         """,
         ["success", utcnow(), str(output_path) if output_path is not None else None, record_count, run_id],
     )
+    LOGGER.info("Finished pipeline run_id=%s status=success records=%s", run_id, record_count)
 
 
 def finish_pipeline_run_failure(
@@ -157,3 +164,4 @@ def finish_pipeline_run_failure(
             run_id,
         ],
     )
+    LOGGER.error("Finished pipeline run_id=%s status=failed error_type=%s error=%s", run_id, type(error).__name__, error)

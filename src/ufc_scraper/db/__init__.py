@@ -1,5 +1,5 @@
 from .connection import DEFAULT_DB_PATH, get_connection
-from .load import load_fight_details_staging
+from .load import load_transformed_data, transformed_files
 from .pipeline import (
     PipelineRun,
     checksum_file,
@@ -58,5 +58,6 @@ __all__ = [
     "register_pipeline_file",
     "start_pipeline_run",
     "get_connection",
-    "load_fight_details_staging",
+    "load_transformed_data",
+    "transformed_files",
 ]

@@ -9,6 +9,8 @@ import polars as pl
 
 from ..storage import build_staging_output_path
 from ..storage import scraped_timestamp, url_identifier
+from ..config import project_path
+from ..logging import get_logger, timed
 from ..validation import (
     validate_events_file,
     validate_fight_details_file,
@@ -16,8 +18,8 @@ from ..validation import (
     validate_fighters_file,
 )
 
-ROOT = Path(__file__).resolve().parents[3]
-RAW_ROOT = ROOT / "data" / "raw"
+RAW_ROOT = project_path("raw", "root")
+LOGGER = get_logger(__name__, stage="staging")
 
 
 def _json(path: Path) -> Any:
@@ -132,6 +134,7 @@ def _stage_details(files: list[Path], category: str, staged_at: datetime, ingest
     }
 
 
+@timed(logger=LOGGER)
 def stage_dataset(
     dataset: str,
     raw_root: str | Path = RAW_ROOT,
@@ -146,6 +149,7 @@ def stage_dataset(
     files = sorted((root / category).rglob("*.json"))
     if not files:
         raise FileNotFoundError(f"No JSON files found under {root / category}")
+    LOGGER.info("Staging dataset=%s input_files=%d source=%s", dataset, len(files), root / category)
     staged_at = now or datetime.now()
     ingested_at = scraped_timestamp()
     if dataset == "fighters":

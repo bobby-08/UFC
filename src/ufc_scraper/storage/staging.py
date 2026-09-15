@@ -3,9 +3,10 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
+from ..config import project_path
 
-ROOT = Path(__file__).resolve().parents[3]
-STAGING_ROOT = ROOT / "data" / "staging"
+
+STAGING_ROOT = project_path("staging", "root")
 
 
 def build_staging_timestamp_folder_name(now: datetime | None = None) -> str:

@@ -13,16 +13,20 @@ sys.path.insert(0, str(ROOT / "src"))
 from ufc_scraper.scrapers.events import UFCStatsEventsScraper
 from ufc_scraper.scrapers.fights_details import UFCStatsFightsDetailsScraper
 from ufc_scraper.scrapers.fights_summary import UFCStatsFightSummaryScraper
+from ufc_scraper.logging import get_logger
 from ufc_scraper.storage import build_raw_output_path, scraped_timestamp, url_identifier
+
+
+LOGGER = get_logger(__name__, stage="scrape")
 
 
 async def scrape_event(event_url: str) -> None:
     event_scraper = UFCStatsEventsScraper()
     fight_urls = await event_scraper.scrape_event_fight_links_async(event_url)
-    print(f"Found {len(fight_urls)} fights for {event_url}")
+    LOGGER.info("Found fights=%d event_url=%s", len(fight_urls), event_url)
 
     for index, fight_url in enumerate(fight_urls, start=1):
-        print(f"[{index}/{len(fight_urls)}] {fight_url}")
+        LOGGER.info("Scraping fight index=%d total=%d fight_url=%s", index, len(fight_urls), fight_url)
         summary_scraper = UFCStatsFightSummaryScraper()
         summary = await summary_scraper.scrape_fight_summary_async(fight_url)
         if summary.event_link.rstrip("/") != event_url.rstrip("/"):
@@ -47,8 +51,8 @@ async def scrape_event(event_url: str) -> None:
         details_payload["event_id"] = url_identifier(event_url, "/event-details/")
         details_payload["fight_id"] = url_identifier(fight_url, "/fight-details/")
         details_path.write_text(json.dumps(details_payload, indent=2), encoding="utf-8")
-        print(f"  summary: {summary_path}")
-        print(f"  details: {details_path}")
+        LOGGER.info("Saved fight summary path=%s", summary_path)
+        LOGGER.info("Saved fight details path=%s", details_path)
 
 
 def main() -> None:

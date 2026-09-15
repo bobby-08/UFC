@@ -18,3 +18,19 @@ FIGHT_SUMMARY_COLS = [
     "scraped_at",
     "ingested_at",
 ]
+
+FIGHT_SUMMARY_BASE_COLS = [
+    "fight_id",
+    "event_id",
+    "event_name",
+    "bout_type",
+    "method",
+    "round",
+    "time",
+    "time_seconds",
+    "time_format",
+    "referee",
+    "details",
+    "scraped_at",
+    "ingested_at",
+]

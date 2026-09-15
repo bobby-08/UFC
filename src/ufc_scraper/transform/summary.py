@@ -1,9 +1,20 @@
 import polars as pl
-from utils.standardisation import standardize_dataframe
+from ..utils.standardisation import standardize_dataframe
+from ._common import read_staging, schema_values, write_transformation
+
+_SCHEMA = schema_values("summary.toml")
+FIGHT_SUMMARY_COLS = _SCHEMA["FIGHT_SUMMARY_COLS"]
+FIGHT_SUMMARY_BASE_COLS = _SCHEMA["FIGHT_SUMMARY_BASE_COLS"]
 
 def transform_fight_summary(
-    fight_summary: pl.DataFrame,
+    fight_summary: pl.DataFrame | str | None = None,
 ) -> pl.DataFrame:
+
+    if fight_summary is None:
+        fight_summary = read_staging("fight_summary")
+    elif not isinstance(fight_summary, pl.DataFrame):
+        fight_summary = pl.read_parquet(fight_summary)
+    fight_summary = standardize_dataframe(fight_summary, empty_to_null=True)
 
     return (
         fight_summary
@@ -84,9 +95,12 @@ def create_fight_summary_long(
         how="vertical",
     )
 
-fight_summary_long = (
-    fight_summary
-    .pipe(standardize_dataframe, empty_to_null=True)
-    .pipe(transform_fight_summary)
-    .pipe(create_fight_summary_long)
-)
+def transform_fight_summary_from_staging(path: str | None = None) -> pl.DataFrame:
+    return create_fight_summary_long(transform_fight_summary(read_staging("fight_summary", path)))
+
+
+def save_transformed_fight_summary(path: str | None = None):
+    return write_transformation(transform_fight_summary_from_staging(path), "fight_summary")
+
+
+__all__ = ["transform_fight_summary", "create_fight_summary_long", "transform_fight_summary_from_staging", "save_transformed_fight_summary"]

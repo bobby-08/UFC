@@ -17,7 +17,7 @@ from ufc_scraper.db import (
     register_pipeline_file,
     start_pipeline_run,
 )
-from ufc_scraper.transform.fight_details import stage_fight_details
+from ufc_scraper.transform.not_used_fight_details import stage_fight_details
 
 
 def main() -> None:

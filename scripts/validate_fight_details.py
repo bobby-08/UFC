@@ -7,27 +7,32 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from ufc_scraper.config import project_path
+from ufc_scraper.logging import get_logger
 from ufc_scraper.validation import validate_fight_details_file
+
+
+LOGGER = get_logger(__name__, stage="validation")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate raw UFCStats fight-details JSON files")
-    parser.add_argument("path", type=Path, nargs="?", help="JSON file or directory; defaults to data/raw/fight_details")
+    parser.add_argument("path", type=Path, nargs="?", help="JSON file or directory; defaults to the configured raw fight-details path")
     args = parser.parse_args()
-    target = args.path or ROOT / "data" / "raw" / "fight_details"
+    target = args.path or project_path("raw", "fight_details")
     files = [target] if target.is_file() else sorted(target.rglob("*.json"))
     if not files:
-        print(f"No JSON files found under {target}", file=sys.stderr)
+        LOGGER.error("No JSON files found under path=%s", target)
         return 1
 
     exit_code = 0
     for file_path in files:
         report = validate_fight_details_file(file_path)
         result = "VALID" if report.valid else "INVALID"
-        print(f"{result}: {file_path} ({report.totals_rows} totals, {report.significant_strikes_rows} significant-strikes)")
+        LOGGER.info("Validation result=%s path=%s totals=%d significant_strikes=%d", result, file_path, report.totals_rows, report.significant_strikes_rows)
         for issue in report.issues:
             location = f" [{issue.path}]" if issue.path else ""
-            print(f"  {issue.severity.upper()} {issue.code}{location}: {issue.message}")
+            LOGGER.warning("Validation issue severity=%s code=%s path=%s message=%s", issue.severity, issue.code, location or "<root>", issue.message)
         if not report.valid:
             exit_code = 1
     return exit_code

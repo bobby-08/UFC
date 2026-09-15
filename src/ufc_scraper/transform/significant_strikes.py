@@ -1,8 +1,20 @@
 import polars as pl
 
-from utils.standardisation import standardize_dataframe
+from ..utils.standardisation import standardize_dataframe
+from ._common import read_staging, schema_values, write_transformation
 
-def transform_significant_strikes(significant_strikes: pl.DataFrame) -> pl.DataFrame:
+_SCHEMA = schema_values("significant_strikes.toml")
+CATEGORIES = _SCHEMA["CATEGORIES"]
+METRICS = _SCHEMA["METRICS"]
+FIGHTERS = _SCHEMA["FIGHTERS"]
+BASE_COLS = _SCHEMA["BASE_COLS"]
+
+def transform_significant_strikes(significant_strikes: pl.DataFrame | str | None = None) -> pl.DataFrame:
+    if significant_strikes is None:
+        significant_strikes = read_staging("significant_strikes")
+    elif not isinstance(significant_strikes, pl.DataFrame):
+        significant_strikes = pl.read_parquet(significant_strikes)
+    significant_strikes = standardize_dataframe(significant_strikes, empty_to_null=True)
     exprs_values = []
     exprs_values_pct = []
 
@@ -95,9 +107,15 @@ def create_significant_strikes_long(
         how="vertical",
     )
     
-significant_strikes_long = (
-    significant_strikes
-    .pipe(standardize_dataframe, empty_to_null=True)
-    .pipe(transform_significant_strikes)
-    .pipe(create_significant_strikes_long)
-)
+def transform_significant_strikes_from_staging(path: str | None = None) -> pl.DataFrame:
+    return create_significant_strikes_long(transform_significant_strikes(read_staging("significant_strikes", path)))
+
+
+def save_transformed_significant_strikes(path: str | None = None):
+    return write_transformation(transform_significant_strikes_from_staging(path), "significant_strikes")
+
+
+__all__ = [
+    "transform_significant_strikes", "create_significant_strikes_long",
+    "transform_significant_strikes_from_staging", "save_transformed_significant_strikes",
+]

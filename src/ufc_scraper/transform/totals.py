@@ -1,7 +1,20 @@
 import polars as pl
-from utls.standardisation import standardize_dataframe
+from ..utils.standardisation import standardize_dataframe
+from ._common import read_staging, schema_values, write_transformation
 
-def transform_totals(totals: pl.DataFrame) -> pl.DataFrame:
+_SCHEMA = schema_values("totals.toml")
+TOTALS_VALUE_CATEGORIES = _SCHEMA["TOTALS_VALUE_CATEGORIES"]
+TOTALS_PCT_CATEGORIES = _SCHEMA["TOTALS_PCT_CATEGORIES"]
+TOTALS_INTEGER_CATEGORIES = _SCHEMA["TOTALS_INTEGER_CATEGORIES"]
+FIGHTERS = _SCHEMA["FIGHTERS"]
+BASE_COLS = _SCHEMA["BASE_COLS"]
+
+def transform_totals(totals: pl.DataFrame | str | None = None) -> pl.DataFrame:
+    if totals is None:
+        totals = read_staging("totals")
+    elif not isinstance(totals, pl.DataFrame):
+        totals = pl.read_parquet(totals)
+    totals = standardize_dataframe(totals, empty_to_null=True)
 
     exprs_values = []
     exprs_pct = []
@@ -181,9 +194,12 @@ def create_totals_long(
         how="vertical",
     )
 
-totals_long = (
-    totals
-    .pipe(standardize_dataframe, empty_to_null=True)
-    .pipe(transform_totals)
-    .pipe(create_totals_long)
-)
+def transform_totals_from_staging(path: str | None = None) -> pl.DataFrame:
+    return create_totals_long(transform_totals(read_staging("totals", path)))
+
+
+def save_transformed_totals(path: str | None = None):
+    return write_transformation(transform_totals_from_staging(path), "totals")
+
+
+__all__ = ["transform_totals", "create_totals_long", "transform_totals_from_staging", "save_transformed_totals"]

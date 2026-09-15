@@ -14,7 +14,11 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from ufc_scraper.scrapers.events import UFCStatsEventsScraper
 from ufc_scraper.scrapers.fights_details import UFCStatsFightsDetailsScraper, build_fight_details_payload
+from ufc_scraper.logging import get_logger
 from ufc_scraper.storage import build_raw_output_path, scraped_timestamp, url_identifier
+
+
+LOGGER = get_logger(__name__, stage="scrape")
 
 
 def default_output_path(fight_url: str) -> Path:
@@ -132,9 +136,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 finish_pipeline_run_failure(connection, run.run_id, exc, output_path=output_path)
                 raise
 
-    print(f"Saved {totals_count + sig_count} rows to {output_path}")
-    print(f"Totals rows: {totals_count}")
-    print(f"Significant strikes rows: {sig_count}")
+    LOGGER.info("Saved fight details path=%s total_rows=%d totals=%d significant_strikes=%d", output_path, totals_count + sig_count, totals_count, sig_count)
     return 0
 
 

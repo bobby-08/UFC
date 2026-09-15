@@ -3,9 +3,10 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
+from ..config import project_path
 
-ROOT = Path(__file__).resolve().parents[3]
-RAW_ROOT = ROOT / "data" / "raw"
+
+RAW_ROOT = project_path("raw", "root")
 
 
 def build_timestamp_folder_name(now: datetime | None = None) -> str:

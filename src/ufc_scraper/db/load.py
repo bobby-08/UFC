@@ -1,30 +1,69 @@
 from __future__ import annotations
 
+from glob import glob
 from pathlib import Path
 
 import duckdb
 
-from .schema import create_fight_significant_strikes_table, create_fight_totals_table
+from ..config import PATHS, PROJECT_ROOT
+from ..logging import get_logger, timed
+from ..quality import check_processed_files, check_stage_comparisons, deduplicate_processed_files
 
 
-def load_fight_details_staging(
+LOGGER = get_logger(__name__, stage="database")
+
+TRANSFORMED_DATASETS = (
+    "events",
+    "fighters",
+    "fighter_stats",
+    "fight_summary",
+    "totals",
+    "significant_strikes",
+)
+
+
+def transformed_files() -> dict[str, list[Path]]:
+    """Return all configured processed Parquet files grouped by dataset."""
+    result: dict[str, list[Path]] = {}
+    for dataset in TRANSFORMED_DATASETS:
+        pattern = PROJECT_ROOT / PATHS["transformation"][dataset]
+        files = sorted(Path(path) for path in glob(str(pattern)))
+        if not files:
+            raise FileNotFoundError(f"No transformed Parquet files found for dataset={dataset} pattern={pattern}")
+        result[dataset] = files
+    return result
+
+
+@timed(logger=LOGGER)
+def load_transformed_data(
     connection: duckdb.DuckDBPyConnection,
-    totals_path: str | Path,
-    significant_strikes_path: str | Path,
 ) -> dict[str, int]:
-    """Idempotently load normalized fight-details Parquet files into DuckDB."""
-    create_fight_totals_table(connection=connection)
-    create_fight_significant_strikes_table(connection=connection)
-    totals_columns = ["fight_link", "round_label", "fighter", "kd", "sig_str", "sig_str_pct", "total_str", "td", "td_pct", "sub_att", "rev", "ctrl"]
-    sig_columns = ["fight_link", "round_label", "fighter", "sig_str", "sig_str_pct", "head", "body", "leg", "distance", "clinch", "ground"]
+    """Load every configured processed Parquet dataset into DuckDB.
+
+    Tables are recreated by ``create_transformed_schema`` before this function
+    is called, making the load deterministic and independent of staging data.
+    """
+    files = deduplicate_processed_files(transformed_files())
+    check_processed_files(files)
+    check_stage_comparisons(files)
+    counts: dict[str, int] = {}
     connection.execute("BEGIN")
     try:
-        connection.execute("INSERT OR REPLACE INTO fight_totals SELECT " + ", ".join(totals_columns) + " FROM read_parquet(?)", [str(Path(totals_path))])
-        connection.execute("INSERT OR REPLACE INTO fight_significant_strikes SELECT " + ", ".join(sig_columns) + " FROM read_parquet(?)", [str(Path(significant_strikes_path))])
-        totals_count = connection.execute("SELECT COUNT(*) FROM read_parquet(?)", [str(Path(totals_path))]).fetchone()[0]
-        sig_count = connection.execute("SELECT COUNT(*) FROM read_parquet(?)", [str(Path(significant_strikes_path))]).fetchone()[0]
+        for dataset, paths in files.items():
+            pattern = str(PROJECT_ROOT / PATHS["transformation"][dataset])
+            count = connection.execute(
+                "SELECT COUNT(*) FROM read_parquet(?)",
+                [pattern],
+            ).fetchone()[0]
+            connection.execute(
+                f'INSERT OR REPLACE INTO "{dataset}" SELECT * FROM read_parquet(?)',
+                [pattern],
+            )
+            counts[dataset] = count
+            LOGGER.info("Loaded transformed dataset=%s files=%d rows=%d", dataset, len(paths), count)
         connection.execute("COMMIT")
     except Exception:
         connection.execute("ROLLBACK")
+        LOGGER.exception("Failed loading transformed datasets")
         raise
-    return {"totals": totals_count, "significant_strikes": sig_count}
+    return counts

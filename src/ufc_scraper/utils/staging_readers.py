@@ -7,8 +7,10 @@ from collections import defaultdict
 
 import polars as pl
 
-ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_STAGING_ROOT = ROOT / "data" / "staging"
+from ..config import project_path
+
+
+DEFAULT_STAGING_ROOT = project_path("staging", "root")
 
 
 def _staged_pattern(staging_dir: str | Path, filename: str) -> Path:
