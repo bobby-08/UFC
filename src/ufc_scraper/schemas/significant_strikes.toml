@@ -1,0 +1,11 @@
+CATEGORIES = ["sig_str", "head", "body", "leg", "distance", "clinch", "ground"]
+METRICS = ["landed", "attempted", "pct"]
+FIGHTERS = [1, 2]
+
+BASE_COLS = [
+    "fight_id",
+    "event_id",
+    "round",
+    "scraped_at",
+    "ingested_at",
+]

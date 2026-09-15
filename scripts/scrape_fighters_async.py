@@ -32,7 +32,7 @@ async def main() -> None:
             output_path.parent.mkdir(parents=True, exist_ok=True)
             scraped_at = scraped_timestamp()
             payload = [
-                {**asdict(row), "scraped_at": scraped_at, "event_id": None, "fight_id": None}
+                {**asdict(row), "scraped_at": scraped_at}
                 for row in rows
             ]
             output_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")

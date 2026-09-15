@@ -73,7 +73,11 @@ def _stage_fighters(files: list[Path], category: str, staged_at: datetime, inges
         report = validate_fighters_file(path)
         if not report.valid:
             raise ValueError(f"Invalid fighters file {path}: " + "; ".join(x.message for x in report.errors))
-        rows.extend(_data_with_metadata(row, _metadata(_scraped_at(row.get("scraped_at"), path), None, None, ingested_at)) for row in _json(path))
+        for row in _json(path):
+            metadata = _metadata(_scraped_at(row.get("scraped_at"), path), None, None, ingested_at)
+            metadata.pop("event_id")
+            metadata.pop("fight_id")
+            rows.append(_data_with_metadata(row, metadata))
     return {"fighters": _write(rows, category, "fighters.parquet", staged_at)}
 
 

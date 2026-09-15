@@ -1,0 +1,8 @@
+EVENT_COLS = [
+    "event_id",
+    "event_name",
+    "event_date",
+    "event_location",
+    "scraped_at",
+    "ingested_at",
+]

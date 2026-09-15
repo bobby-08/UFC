@@ -10,9 +10,12 @@ from urllib.parse import urlparse
 from .fight_details import ValidationReport, _add
 
 
-FIELDS = {
+REQUIRED_FIELDS = {
     "fighter_id", "fighter_link", "first_name", "last_name", "nickname",
     "height", "weight", "reach", "stance", "wins", "losses", "draws", "belt",
+}
+FIELDS = REQUIRED_FIELDS | {
+    "scraped_at", "event_id", "fight_id",
 }
 RECORD_PATTERN = re.compile(r"^(?:--|---|\d+)$")
 MEASUREMENT_PATTERN = re.compile(r"^(?:--|---|.*\d.*)$")
@@ -48,7 +51,7 @@ def validate_fighters_payload(payload: Any, file_path: str | Path = "<memory>") 
         if not isinstance(fighter, Mapping):
             _add(report, "error", "invalid_row", "Fighter must be a JSON object", path)
             continue
-        missing = sorted(FIELDS - fighter.keys())
+        missing = sorted(REQUIRED_FIELDS - fighter.keys())
         if missing:
             _add(report, "error", "missing_fields", f"Missing fields: {', '.join(missing)}", path)
         unexpected = sorted(set(fighter) - FIELDS)
