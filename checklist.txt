@@ -133,42 +133,53 @@ Legend
 
 9. Airflow orchestration
 ------------------------
-[ ] Choose the Airflow deployment model: local, Docker Compose, managed service, or Kubernetes.
+[x] Choose local deployment as the initial Airflow deployment model.
 [x] Add Airflow dependencies separately from the core application dependencies.
-[ ] Create a dedicated `dags/` directory outside `src/ufc_scraper`.
-[ ] Create one main DAG for the UFC pipeline with a clear DAG ID and owner.
+[x] Create a dedicated `dags/` directory outside `src/ufc_scraper`.
+[x] Add a local Docker Compose setup with PostgreSQL, Airflow API server, scheduler, and DAG processor.
+[x] Add a custom Airflow image with the UFC application dependencies and Playwright Chromium.
+[ ] Build and run the Docker Compose environment successfully.
+[x] Create one main DAG for the UFC pipeline with DAG ID `ufc_pipeline` and owner `ufc_data_engineering`.
 [ ] Define the schedule, start date, timezone, catchup policy, and max active runs.
-[ ] Set `catchup=False` unless historical backfills are intentionally required.
 [ ] Define DAG-level `default_args` with retries, retry delay, execution timeout, and failure callbacks.
-[ ] Add task boundaries for scrape, validation, staging, transformation, and database loading.
+[x] Add task boundaries for the scraping stage.
+[x] Define dependencies between the scraping tasks.
+[ ] Add validation, staging, transformation, and database-loading task boundaries in later pipeline phases.
 [ ] Define dependencies so validation succeeds before staging, staging before transformation, and transformation before database loading.
-[ ] Use Airflow task functions or operators that call reusable `ufc_scraper` code rather than duplicating pipeline logic in DAG files.
+[x] Use Airflow task functions or operators that call reusable `ufc_scraper` code rather than duplicating pipeline logic in DAG files.
 [ ] Pass the Airflow `dag_run.run_id` into logging and pipeline audit records.
+[ ] Configure Airflow connections and variables for database paths, URLs, credentials, and runtime settings.
+[ ] Keep credentials in an Airflow secrets backend or connection manager; never store them in DAG code.
+[ ] Add task-level idempotency so retries do not duplicate raw, staging, processed, or database records.
+[ ] Add a local command to validate and render the DAG before deployment.
+
+
+10. Miscellaneous orchestration checks
+---------------------------------------
+[ ] Containerize the stable project with Docker for the next deployment phase.
+[ ] Choose and document the Docker deployment topology, such as Docker Compose.
+[ ] Set `catchup=False` unless historical backfills are intentionally required.
 [ ] Add task-level structured context: dataset, logical date, run ID, input path, output path, and row count.
-[ ] Configure Airflow retries for network scraping failures and avoid retrying deterministic validation failures.
+[ ] Configure Airflow retries specifically for network scraping failures.
 [ ] Add task timeouts and resource limits for browser-based scraping.
 [ ] Add failure callbacks that log the traceback and notify the appropriate channel.
 [ ] Add success/failure notifications for the full DAG and critical tasks.
-[ ] Configure Airflow connections and variables for database paths, URLs, credentials, and runtime settings.
-[ ] Keep credentials in an Airflow secrets backend or connection manager; never store them in DAG code.
 [ ] Define XCom usage only for small metadata such as paths, counts, checksums, and validation status.
 [ ] Store large datasets in filesystem/object storage, not XCom.
 [ ] Add sensors or dataset scheduling if downstream tasks depend on new raw data.
-[ ] Add task-level idempotency so retries do not duplicate raw, staging, processed, or database records.
 [ ] Decide how timestamped output folders map to Airflow logical dates and run IDs.
 [ ] Add a controlled backfill procedure for historical logical dates.
 [ ] Add a rerun procedure for failed tasks without repeating successful upstream work.
 [ ] Add concurrency limits to avoid overlapping scrapes of the same source.
 [ ] Add DAG tests for task dependencies and configuration.
-[ ] Add a local command to validate and render the DAG before deployment.
 [ ] Add CI checks for DAG import errors, Python tests, linting, and type checking.
 [ ] Deploy the DAG and plugins/configuration through version control and a repeatable release process.
 [ ] Configure log retention and remote log storage for the Airflow environment.
 [ ] Document operational runbooks for failures, retries, backfills, and partial outputs.
 
 
-10. Logging
-----------
+11. Logging
+-----------
 [x] Add centralized standard-library logging configuration.
 [x] Add reusable get_logger() and stage-specific loggers.
 [x] Add console and timestamped file logging.
