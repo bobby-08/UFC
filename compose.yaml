@@ -13,8 +13,12 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
     AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-api-server:8080/execution/
     AIRFLOW__API__BASE_URL: http://localhost:8080
+    AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW_JWT_SECRET}
+    AIRFLOW__CORE__AUTH_MANAGER: airflow.api_fastapi.auth.managers.simple.simple_auth_manager.SimpleAuthManager
+    AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_USERS: "${AIRFLOW_ADMIN_USERNAME:-admin}:admin"
     PYTHONPATH: /opt/airflow/src
     UFC_LOG_DIR: /opt/airflow/logs
+    PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
   volumes:
     - ./dags:/opt/airflow/dags
     - ./src:/opt/airflow/src
@@ -46,15 +50,7 @@ services:
     command:
       - bash
       - -c
-      - >-
-        airflow db migrate &&
-        airflow users create
-        --username "${AIRFLOW_ADMIN_USERNAME:-admin}"
-        --password "${AIRFLOW_ADMIN_PASSWORD:-admin}"
-        --firstname UFC
-        --lastname Admin
-        --role Admin
-        --email admin@example.com || true
+      - airflow db migrate
     restart: "no"
 
   airflow-api-server:

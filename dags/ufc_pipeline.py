@@ -10,15 +10,19 @@ import shlex
 import sys
 from pathlib import Path
 
-try:  # Airflow 3
-    from airflow.sdk import DAG
-except ImportError:  # Airflow 2 compatibility
-    from airflow import DAG
+# try:  # Airflow 3
+#     from airflow.sdk import DAG
+# except ImportError:  # Airflow 2 compatibility
+#     from airflow import DAG
 
-try:  # Airflow 3's standard provider
-    from airflow.providers.standard.operators.bash import BashOperator
-except ImportError:  # Airflow 2 compatibility
-    from airflow.operators.bash import BashOperator
+# try:  # Airflow 3's standard provider
+#     from airflow.providers.standard.operators.bash import BashOperator
+# except ImportError:  # Airflow 2 compatibility
+#     from airflow.operators.bash import BashOperator
+
+from airflow.sdk import DAG
+from airflow.providers.standard.operators.bash import BashOperator
+
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -60,4 +64,5 @@ with DAG(
         bash_command=_script_command("scrape_latest_event.py"),
         cwd=str(PROJECT_ROOT),
         env=_pipeline_env(),
+        append_env=True,
     )
