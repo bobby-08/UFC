@@ -131,6 +131,19 @@ class UFCStatsEventsScraper:
     def scrape_latest_event(self) -> tuple[EventRow, FightRow]:
         return asyncio.run(self.scrape_latest_event_async())
 
+    async def get_latest_event_async(self) -> EventRow:
+        """Return the latest completed event without opening its event page."""
+        events = await self.get_completed_events_async()
+        if not events:
+            raise RuntimeError("No completed UFC events were found")
+        return events[0]
+
+    async def get_completed_events_async(self) -> list[EventRow]:
+        """Return all completed events listed by UFCStats, newest first."""
+        async with AsyncUFCStatsClient() as client:
+            completed_events_html = await client.get_html(EVENTS_PATH)
+        return self.parse_event_rows(completed_events_html)
+
     async def scrape_latest_event_async(self) -> tuple[EventRow, FightRow]:
         async with AsyncUFCStatsClient() as client:
             completed_events_html = await client.get_html(EVENTS_PATH)

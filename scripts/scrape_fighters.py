@@ -35,12 +35,30 @@ def main() -> None:
     ]
     output_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     if args.track_pipeline:
-        from ufc_scraper.db import create_schema, finish_pipeline_run_success, get_connection, register_pipeline_file, start_pipeline_run
+        from ufc_scraper.db import (
+            ensure_pipeline_audit_tables,
+            finish_pipeline_run_failure,
+            finish_pipeline_run_success,
+            get_connection,
+            register_pipeline_file,
+            start_pipeline_run,
+        )
         with get_connection() as connection:
-            create_schema(connection)
+            # Scraping must only create/update audit tables; create_schema also
+            # recreates transformed tables and must not run during ingestion.
+            ensure_pipeline_audit_tables(connection)
             run = start_pipeline_run(connection, dataset_name="fighters")
-            register_pipeline_file(connection, run.run_id, "fighters", output_path)
-            finish_pipeline_run_success(connection, run.run_id, output_path=output_path, record_count=len(fighters))
+            try:
+                register_pipeline_file(connection, run.run_id, "fighters", output_path)
+                finish_pipeline_run_success(
+                    connection,
+                    run.run_id,
+                    output_path=output_path,
+                    record_count=len(fighters),
+                )
+            except Exception as exc:
+                finish_pipeline_run_failure(connection, run.run_id, exc)
+                raise
     LOGGER.info("Saved fighters=%d path=%s", len(fighters), output_path)
     for fighter in fighters[:5]:
         LOGGER.debug("Sample fighter=%s", asdict(fighter))

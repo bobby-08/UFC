@@ -95,7 +95,9 @@ class UFCStatsFightsDetailsScraper:
     """
 
     def __init__(self, client: UFCStatsClient | None = None, parser: UFCStatsParser | None = None) -> None:
-        self.client = client or UFCStatsClient(headless=False, persistent_profile=True)
+        # Airflow workers run without an X server, so this scraper must use a
+        # headless browser in Docker/WSL and other scheduled environments.
+        self.client = client or UFCStatsClient(headless=True, persistent_profile=True)
         self.parser = parser or UFCStatsParser()
         self.event_link = ""
 
@@ -293,7 +295,7 @@ class UFCStatsFightsDetailsScraper:
         return asyncio.run(self.scrape_fight_details_async(fight_url))
 
     async def scrape_fight_details_async(self, fight_url: str) -> tuple[List[TotalsRow], List[SignificantStrikesRow]]:
-        async with AsyncUFCStatsClient(headless=False, persistent_profile=True) as client:
+        async with AsyncUFCStatsClient(headless=True, persistent_profile=True) as client:
             # Warm the browser session on a normal UFCStats page before the deep-linked fight page.
             try:
                 await client.get_html(

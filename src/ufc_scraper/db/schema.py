@@ -277,6 +277,46 @@ CREATE TABLE IF NOT EXISTS pipeline_files (
 """
 
 
+DOWNLOADED_EVENTS_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS downloaded_events (
+    event_id VARCHAR PRIMARY KEY,
+    event_link VARCHAR NOT NULL UNIQUE,
+    event_name VARCHAR NOT NULL,
+    event_date DATE NOT NULL,
+    file_path VARCHAR NOT NULL,
+    file_name VARCHAR NOT NULL,
+    file_checksum VARCHAR,
+    downloaded_at TIMESTAMP NOT NULL
+);
+"""
+
+
+DOWNLOADED_RESOURCES_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS downloaded_resources (
+    dataset_name VARCHAR NOT NULL,
+    resource_id VARCHAR NOT NULL,
+    event_id VARCHAR,
+    file_path VARCHAR NOT NULL,
+    file_name VARCHAR NOT NULL,
+    file_checksum VARCHAR,
+    downloaded_at TIMESTAMP NOT NULL,
+    PRIMARY KEY (dataset_name, resource_id)
+);
+"""
+
+
+EVENT_DATASET_STATUS_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS event_dataset_status (
+    event_id VARCHAR NOT NULL,
+    dataset_name VARCHAR NOT NULL,
+    status VARCHAR NOT NULL,
+    record_count INTEGER NOT NULL DEFAULT 0,
+    completed_at TIMESTAMP,
+    PRIMARY KEY (event_id, dataset_name)
+);
+"""
+
+
 def create_fighters_table(
     connection: duckdb.DuckDBPyConnection | None = None,
     db_path: str | Path = DEFAULT_DB_PATH,
@@ -381,6 +421,45 @@ def create_pipeline_files_table(
     connection.execute(PIPELINE_FILES_TABLE_SQL)
 
 
+def create_downloaded_events_table(
+    connection: duckdb.DuckDBPyConnection | None = None,
+    db_path: str | Path = DEFAULT_DB_PATH,
+) -> None:
+    """Create the event download checkpoint table if it does not exist."""
+    if connection is None:
+        with get_connection(db_path) as managed_connection:
+            managed_connection.execute(DOWNLOADED_EVENTS_TABLE_SQL)
+        return
+
+    connection.execute(DOWNLOADED_EVENTS_TABLE_SQL)
+
+
+def create_downloaded_resources_table(
+    connection: duckdb.DuckDBPyConnection | None = None,
+    db_path: str | Path = DEFAULT_DB_PATH,
+) -> None:
+    """Create the fight/file download checkpoint table if needed."""
+    if connection is None:
+        with get_connection(db_path) as managed_connection:
+            managed_connection.execute(DOWNLOADED_RESOURCES_TABLE_SQL)
+        return
+
+    connection.execute(DOWNLOADED_RESOURCES_TABLE_SQL)
+
+
+def create_event_dataset_status_table(
+    connection: duckdb.DuckDBPyConnection | None = None,
+    db_path: str | Path = DEFAULT_DB_PATH,
+) -> None:
+    """Create the per-event dataset completion table if needed."""
+    if connection is None:
+        with get_connection(db_path) as managed_connection:
+            managed_connection.execute(EVENT_DATASET_STATUS_TABLE_SQL)
+        return
+
+    connection.execute(EVENT_DATASET_STATUS_TABLE_SQL)
+
+
 def create_fights_table(
     connection: duckdb.DuckDBPyConnection | None = None,
     db_path: str | Path = DEFAULT_DB_PATH,
@@ -397,6 +476,9 @@ def create_schema(
     create_transformed_schema(connection=connection, db_path=db_path)
     create_pipeline_runs_table(connection=connection, db_path=db_path)
     create_pipeline_files_table(connection=connection, db_path=db_path)
+    create_downloaded_events_table(connection=connection, db_path=db_path)
+    create_downloaded_resources_table(connection=connection, db_path=db_path)
+    create_event_dataset_status_table(connection=connection, db_path=db_path)
 
 
 def create_transformed_schema(

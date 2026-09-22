@@ -46,7 +46,7 @@ Legend
 [x] Add validation scripts under scripts/.
 [x] Make validation scripts use configured raw paths.
 [ ] Add validation reports with machine-readable output.
-[ ] Make validation tasks fail the Airflow DAG when blocking validation errors exist.
+[x] Make validation tasks fail the Airflow DAG when blocking validation errors exist.
 [ ] Add automated tests for valid, invalid, and partially missing payloads.
 
 
@@ -99,7 +99,10 @@ Legend
 [x] Track pipeline runs and registered pipeline files in DuckDB.
 [x] Decide that the database loads transformed data only.
 [x] Add idempotent loading/rebuild behavior.
-[ ] Add foreign-key and relationship checks between events, fights, and fighters.
+[x] Add processed-data quality checks before DuckDB loading.
+[x] Add foreign-key and relationship checks between events, fights, and fighters.
+[x] Add a final database-quality task after DuckDB loading.
+[x] Delete staging Parquet files only after transformation and database-quality checks succeed.
 [ ] Add end-to-end tests for a complete raw-to-database run.
 
 
@@ -114,6 +117,8 @@ Legend
 [x] Define how duplicate scrape runs are detected and handled.
 [x] Define behavior for missing, malformed, or changed source columns.
 [x] Add row-count and null-rate quality checks between pipeline stages.
+[x] Execute processed-data quality checks as an Airflow task before loading.
+[x] Validate loaded DuckDB table presence, non-empty tables, keys, and relationships.
 [ ] Add data dictionary documentation for all processed columns.
 
 
@@ -144,13 +149,15 @@ Legend
 [ ] Define DAG-level `default_args` with retries, retry delay, execution timeout, and failure callbacks.
 [x] Add task boundaries for the scraping stage.
 [x] Define dependencies between the scraping tasks.
-[ ] Add validation, staging, transformation, and database-loading task boundaries in later pipeline phases.
-[ ] Define dependencies so validation succeeds before staging, staging before transformation, and transformation before database loading.
+[x] Add validation, staging, transformation, and database-loading task boundaries.
+[x] Define dependencies so validation succeeds before staging, staging before transformation, and transformation before database loading.
+[x] Add processed-data quality, database-quality, staging-cleanup, and run-complete task boundaries.
+[x] Define the complete dependency chain: scrape → validation → staging → transformation → processed quality → DuckDB load → database quality → cleanup → run complete.
 [x] Use Airflow task functions or operators that call reusable `ufc_scraper` code rather than duplicating pipeline logic in DAG files.
 [ ] Pass the Airflow `dag_run.run_id` into logging and pipeline audit records.
 [ ] Configure Airflow connections and variables for database paths, URLs, credentials, and runtime settings.
 [ ] Keep credentials in an Airflow secrets backend or connection manager; never store them in DAG code.
-[ ] Add task-level idempotency so retries do not duplicate raw, staging, processed, or database records.
+[x] Add task-level idempotency so retries do not duplicate raw, staging, processed, or database records.
 [ ] Add a local command to validate and render the DAG before deployment.
 
 
