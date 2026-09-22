@@ -87,6 +87,24 @@ class UFCStatsEventsScraper:
             time=columns[9],
         )
 
+    def parse_fight_links(self, html: str) -> list[str]:
+        """Extract all fight-detail URLs from an event page."""
+        soup = self.parser.soup(html)
+        links: list[str] = []
+        for row in soup.select("tr.b-fight-details__table-row[data-link]"):
+            fight_link = self.parser.attr(row, "data-link")
+            if fight_link and fight_link not in links:
+                links.append(fight_link)
+        return links
+
+    async def scrape_event_fight_links_async(self, event_url: str) -> list[str]:
+        async with AsyncUFCStatsClient() as client:
+            html = await client.get_html(event_url, required_selector="tr.b-fight-details__table-row")
+        links = self.parse_fight_links(html)
+        if not links:
+            raise RuntimeError(f"No fights were found for event: {event_url}")
+        return links
+
     def _result_code(self, value: str) -> str:
         normalized = value.strip().lower()
         mapping = {
@@ -113,6 +131,19 @@ class UFCStatsEventsScraper:
     def scrape_latest_event(self) -> tuple[EventRow, FightRow]:
         return asyncio.run(self.scrape_latest_event_async())
 
+    async def get_latest_event_async(self) -> EventRow:
+        """Return the latest completed event without opening its event page."""
+        events = await self.get_completed_events_async()
+        if not events:
+            raise RuntimeError("No completed UFC events were found")
+        return events[0]
+
+    async def get_completed_events_async(self) -> list[EventRow]:
+        """Return all completed events listed by UFCStats, newest first."""
+        async with AsyncUFCStatsClient() as client:
+            completed_events_html = await client.get_html(EVENTS_PATH)
+        return self.parse_event_rows(completed_events_html)
+
     async def scrape_latest_event_async(self) -> tuple[EventRow, FightRow]:
         async with AsyncUFCStatsClient() as client:
             completed_events_html = await client.get_html(EVENTS_PATH)
@@ -125,3 +156,25 @@ class UFCStatsEventsScraper:
             main_event = self.parse_main_event(latest_event_html)
 
         return latest_event, main_event
+
+    async def scrape_event_async(self, event_url: str) -> tuple[EventRow, FightRow]:
+        """Scrape a specific event and its main-event row."""
+        async with AsyncUFCStatsClient() as client:
+            completed_events_html = await client.get_html(EVENTS_PATH)
+            events = self.parse_event_rows(completed_events_html)
+            event = next((item for item in events if item.event_link.rstrip("/") == event_url.rstrip("/")), None)
+            if event is None:
+                raise ValueError(f"Event URL was not found in the completed-events listing: {event_url}")
+            event_html = await client.get_html(event_url)
+            main_event = self.parse_main_event(event_html)
+        return event, main_event
+
+    async def scrape_event_only_async(self, event_url: str) -> EventRow:
+        """Return only the event entity for a specific event URL."""
+        async with AsyncUFCStatsClient() as client:
+            completed_events_html = await client.get_html(EVENTS_PATH)
+        events = self.parse_event_rows(completed_events_html)
+        event = next((item for item in events if item.event_link.rstrip("/") == event_url.rstrip("/")), None)
+        if event is None:
+            raise ValueError(f"Event URL was not found in the completed-events listing: {event_url}")
+        return event

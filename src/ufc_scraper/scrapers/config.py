@@ -4,6 +4,7 @@ BASE_URL = "http://www.ufcstats.com"
 
 EVENTS_PATH = "statistics/events/completed?page=all"
 FIGHTERS_PATH = "statistics/fighters?page=all"
+FIGHTERS_LETTER_PATH = "statistics/fighters?char={letter}&page=all"
 EVENT_DETAILS_PATH = "event-details"
 FIGHT_DETAILS_PATH = "fight-details"
 

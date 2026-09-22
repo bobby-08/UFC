@@ -14,7 +14,11 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from ufc_scraper.scrapers.events import UFCStatsEventsScraper
 from ufc_scraper.scrapers.fights_details import UFCStatsFightsDetailsScraper, build_fight_details_payload
-from ufc_scraper.storage import build_raw_output_path
+from ufc_scraper.logging import get_logger
+from ufc_scraper.storage import build_raw_output_path, scraped_timestamp, url_identifier
+
+
+LOGGER = get_logger(__name__, stage="scrape")
 
 
 def default_output_path(fight_url: str) -> Path:
@@ -24,8 +28,11 @@ def default_output_path(fight_url: str) -> Path:
     return build_raw_output_path("fight_details", f"fight_details_{fight_id}.json")
 
 
-def write_json_payload(totals, sigs, fight_url: str, output_path: Path) -> tuple[int, int]:
-    payload = build_fight_details_payload(fight_url, totals, sigs)
+def write_json_payload(totals, sigs, fight_url: str, output_path: Path, event_url: str = "") -> tuple[int, int]:
+    payload = build_fight_details_payload(fight_url, totals, sigs, event_url=event_url)
+    payload["scraped_at"] = scraped_timestamp()
+    payload["event_id"] = url_identifier(event_url, "/event-details/")
+    payload["fight_id"] = url_identifier(fight_url, "/fight-details/")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     return len(payload["totals"]), len(payload["significant_strikes"])
@@ -35,13 +42,13 @@ def write_json_from_html(html: str, fight_url: str, output_path: Path) -> tuple[
     scraper = UFCStatsFightsDetailsScraper()
     totals = scraper.parse_totals(html, fight_url=fight_url)
     sigs = scraper.parse_significant_strikes(html, fight_url=fight_url)
-    return write_json_payload(totals, sigs, fight_url, output_path)
+    return write_json_payload(totals, sigs, fight_url, output_path, event_url=scraper.parse_event_link(html))
 
 
 async def write_json_from_url_async(fight_url: str, output_path: Path) -> tuple[int, int]:
     scraper = UFCStatsFightsDetailsScraper()
     totals, sigs = await scraper.scrape_fight_details_async(fight_url)
-    return write_json_payload(totals, sigs, fight_url, output_path)
+    return write_json_payload(totals, sigs, fight_url, output_path, event_url=scraper.event_link)
 
 
 async def write_json_from_latest_event_async(output_path: Path) -> tuple[int, int]:
@@ -63,6 +70,11 @@ def build_parser() -> argparse.ArgumentParser:
     source.add_argument("--html", type=Path, help="Saved fight-details HTML file")
     parser.add_argument("--fight-url", help="Fight URL to write into the output when parsing HTML")
     parser.add_argument("--output", type=Path, help="Output JSON path")
+    parser.add_argument(
+        "--track-pipeline",
+        action="store_true",
+        help="Record the extraction run in DuckDB (disabled by default)",
+    )
     return parser
 
 
@@ -72,23 +84,59 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.latest_event:
         output_path = args.output or build_raw_output_path("fight_details", "latest_event_fight_details.json")
-        totals_count, sig_count = asyncio.run(write_json_from_latest_event_async(output_path))
         fight_url = "latest event fight"
     elif args.url:
         fight_url = args.url
         output_path = args.output or default_output_path(fight_url)
-        totals_count, sig_count = asyncio.run(write_json_from_url_async(fight_url, output_path))
     else:
         if not args.fight_url:
             parser.error("--fight-url is required when using --html")
         fight_url = args.fight_url
         output_path = args.output or default_output_path(fight_url)
-        html = args.html.read_text(encoding="utf-8")
-        totals_count, sig_count = write_json_from_html(html, fight_url, output_path)
 
-    print(f"Saved {totals_count + sig_count} rows to {output_path}")
-    print(f"Totals rows: {totals_count}")
-    print(f"Significant strikes rows: {sig_count}")
+    connection_context = get_connection() if args.track_pipeline else None
+    if connection_context is None:
+        if args.latest_event:
+            totals_count, sig_count = asyncio.run(write_json_from_latest_event_async(output_path))
+        elif args.url:
+            totals_count, sig_count = asyncio.run(write_json_from_url_async(fight_url, output_path))
+        else:
+            html = args.html.read_text(encoding="utf-8")
+            totals_count, sig_count = write_json_from_html(html, fight_url, output_path)
+    else:
+        from ufc_scraper.db import (
+            create_schema,
+            finish_pipeline_run_failure,
+            finish_pipeline_run_success,
+            get_connection,
+            register_pipeline_file,
+            start_pipeline_run,
+        )
+
+        with connection_context as connection:
+            create_schema(connection)
+            run = start_pipeline_run(connection, dataset_name="fight_details", source_url=fight_url)
+            try:
+                if args.latest_event:
+                    totals_count, sig_count = asyncio.run(write_json_from_latest_event_async(output_path))
+                elif args.url:
+                    totals_count, sig_count = asyncio.run(write_json_from_url_async(fight_url, output_path))
+                else:
+                    html = args.html.read_text(encoding="utf-8")
+                    totals_count, sig_count = write_json_from_html(html, fight_url, output_path)
+
+                register_pipeline_file(connection, run.run_id, "fight_details", output_path)
+                finish_pipeline_run_success(
+                    connection,
+                    run.run_id,
+                    output_path=output_path,
+                    record_count=totals_count + sig_count,
+                )
+            except Exception as exc:
+                finish_pipeline_run_failure(connection, run.run_id, exc, output_path=output_path)
+                raise
+
+    LOGGER.info("Saved fight details path=%s total_rows=%d totals=%d significant_strikes=%d", output_path, totals_count + sig_count, totals_count, sig_count)
     return 0
 
 

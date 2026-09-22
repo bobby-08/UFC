@@ -1,0 +1,19 @@
+TOTALS_VALUE_CATEGORIES = ["sig_str", "total_str", "td"]
+
+TOTALS_PCT_CATEGORIES = ["sig_str_pct", "td_pct", "total_str_pct"]
+
+TOTALS_INTEGER_CATEGORIES = ["kd", "sub_att", "rev"]
+
+TOTALS_METRICS = [
+    "landed",
+    "attempted",
+    "pct",
+    "kd",
+    "sub_att",
+    "rev",
+    "ctrl_seconds",
+]
+
+FIGHTERS = [1, 2]
+
+BASE_COLS = ["fight_id", "event_id", "round", "scraped_at", "ingested_at",]

@@ -1,0 +1,21 @@
+FIGHTER_COLS = [
+    "fighter_id",
+    "fighter_name",
+    "nickname",
+    "height_inches",
+    "weight_lbs",
+    "reach_inches",
+    "stance",
+    "scraped_at",
+    "ingested_at",
+]
+
+FIGHTER_STATS_COLS = [
+    "fighter_id",
+    "wins",
+    "losses",
+    "draws",
+    "belt",
+    "scraped_at",
+    "ingested_at",
+]

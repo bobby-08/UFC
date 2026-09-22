@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
+from string import ascii_lowercase
 
 from .client import UFCStatsClient
-from .config import FIGHTERS_PATH
+from .config import FIGHTERS_LETTER_PATH
 from .parser import UFCStatsParser
 
 
@@ -75,7 +76,11 @@ class UFCStatsFightersScraper:
     async def scrape_all_fighters_async(self) -> list[FighterRow]:
         from .client import AsyncUFCStatsClient
 
+        fighters_by_id: dict[str, FighterRow] = {}
         async with AsyncUFCStatsClient() as client:
-            html = await client.get_html(FIGHTERS_PATH)
+            for letter in ascii_lowercase:
+                html = await client.get_html(FIGHTERS_LETTER_PATH.format(letter=letter))
+                for fighter in self.parse_fighter_rows(html):
+                    fighters_by_id[fighter.fighter_id] = fighter
 
-        return self.parse_fighter_rows(html)
+        return list(fighters_by_id.values())
