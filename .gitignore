@@ -11,3 +11,5 @@ __pycache__/
 .vscode/
 logs/
 steps.txt
+checklist.txt
+logging.md
