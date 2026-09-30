@@ -125,14 +125,20 @@ async def scrape_event(
 
 
 def _event_urls_from_raw_files() -> list[str]:
-    events_root = project_path("raw", "events")
+    roots = [
+        project_path("raw", "events"),
+        project_path("archive", "raw") / "events",
+    ]
     urls: list[str] = []
-    for path in sorted(events_root.rglob("*.json")):
-        payload = json.loads(path.read_text(encoding="utf-8"))
-        event = payload.get("event", {})
-        event_url = event.get("event_link")
-        if event_url and event_url not in urls:
-            urls.append(event_url)
+    for events_root in roots:
+        if not events_root.exists():
+            continue
+        for path in sorted(events_root.rglob("*.json")):
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            event = payload.get("event", {})
+            event_url = event.get("event_link")
+            if event_url and event_url not in urls:
+                urls.append(event_url)
     return urls
 
 

@@ -52,7 +52,7 @@ default_args = {
 
 with DAG(
     dag_id="ufc_pipeline",
-    description="Scrape, validate, stage, and transform UFC raw datasets",
+    description="Scrape, validate, stage, transform, and archive UFC raw datasets",
     default_args=default_args,
     schedule=None,
     catchup=False,
@@ -160,6 +160,14 @@ with DAG(
         append_env=True,
     )
 
+    archive_raw = BashOperator(
+        task_id="archive_raw",
+        bash_command=_script_command("archive_raw.py"),
+        cwd=str(PROJECT_ROOT),
+        env=_pipeline_env(),
+        append_env=True,
+    )
+
     processed_data_quality = BashOperator(
         task_id="processed_data_quality",
         bash_command=_script_command("quality_processed.py"),
@@ -184,8 +192,8 @@ with DAG(
         append_env=True,
     )
 
-    cleanup_staging = BashOperator(
-        task_id="cleanup_staging",
+    delete_staging_files = BashOperator(
+        task_id="delete_staging_files",
         bash_command=_script_command("cleanup_staging.py"),
         cwd=str(PROJECT_ROOT),
         env=_pipeline_env(),
@@ -211,5 +219,8 @@ with DAG(
     validate_fighters >> stage_fighters >> transform
     validate_fight_summary >> stage_fight_summary >> transform
     validate_fight_details >> stage_fight_details >> transform
-    transform >> processed_data_quality >> duckdb_load >> database_quality
-    database_quality >> cleanup_staging >> run_complete
+    # Processed quality compares transformed outputs to staging, so cleanup
+    # runs only after those checks pass and before the DuckDB load.
+    transform >> archive_raw >> processed_data_quality
+    processed_data_quality >> delete_staging_files >> duckdb_load
+    duckdb_load >> database_quality >> run_complete

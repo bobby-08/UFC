@@ -5,6 +5,10 @@ fighters = "data/raw/fighters"
 fight_summary = "data/raw/fight_summary"
 fight_details = "data/raw/fight_details"
 
+[archive]
+root = "data/archive"
+raw = "data/archive/raw"
+
 [staging]
 root = "data/staging"
 events = "data/staging/events/*/events.parquet"
