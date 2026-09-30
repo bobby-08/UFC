@@ -1,4 +1,4 @@
-"""Remove staging Parquet files after a successful transformation run."""
+"""Remove staging Parquet files after processed-data quality checks pass."""
 
 from __future__ import annotations
 
