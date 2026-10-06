@@ -5,13 +5,13 @@ Assumption: Ubuntu 22.04/24.04 VM
 LOCAL PROJECT PREPARATION
 [x] Prepare Compose for VM use: bind Airflow UI to localhost and restart services after reboot.
 [x] Update Docker README and make .env.example available to Git.
-[ ] Commit and push the changes to the web-scraper branch. Do not commit .env.
+[x] Commit and push the changes to the web-scraper branch. Do not commit .env.
 
 AZURE VM SETUP
-[ ] Confirm the VM is running and note its public IP, SSH username, and local SSH key path.
-[ ] In the Azure network rules, allow SSH (TCP 22) only from your IP. Do not open port 8080.
-[ ] Connect to the VM over SSH.
-[ ] Install Docker Engine and the Docker Compose plugin.
+[x] Confirm the VM is running and note its public IP, SSH username, and local SSH key path.
+[x] In the Azure network rules, allow SSH (TCP 22) only from your IP. Do not open port 8080.
+[x] Connect to the VM over SSH.
+[x] Install Docker Engine and the Docker Compose plugin.
 
 DEPLOY THE PROJECT
 [ ] Clone the UFC repository's web-scraper branch on the VM.
@@ -31,4 +31,5 @@ AFTER DEPLOYMENT
 [ ] Keep .env private. Do not run `docker compose down -v` if you want to retain the database volume.
 
 STATUS
-No Azure VM commands have been run. Local deployment-file changes are not yet committed or pushed.
+Local deployment changes are committed; branch matches the tracked origin/web-scraper branch.
+No Azure VM commands have been run yet.
