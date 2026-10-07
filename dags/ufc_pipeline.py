@@ -1,8 +1,4 @@
-"""Airflow DAG for the UFC scrape, validation, staging, and transform stages.
-
-Fighter scraping is intentionally excluded because fighter metadata changes
-infrequently and is processed from the existing raw fighter files.
-"""
+"""Airflow DAG for the UFC scrape, validation, staging, and transform stages."""
 
 from __future__ import annotations
 
@@ -52,12 +48,12 @@ default_args = {
 
 with DAG(
     dag_id="ufc_pipeline",
-    description="Scrape, validate, stage, transform, and archive UFC raw datasets",
+    description="Scrape, validate, stage, transform, archive, and persist UFC datasets",
     default_args=default_args,
     schedule=None,
     catchup=False,
     max_active_runs=1,
-    tags=["ufc", "scraping", "local"],
+    tags=["ufc", "scraping"],
     params={
         "backfill": Param(
             True,
@@ -67,12 +63,28 @@ with DAG(
         )
     },
 ) as dag:
+    restore_blob_data = BashOperator(
+        task_id="restore_blob_data",
+        bash_command=_script_command("blob_data_sync.py", "restore"),
+        cwd=str(PROJECT_ROOT),
+        env=_pipeline_env(),
+        append_env=True,
+    )
+
     scrape_events = BashOperator(
         task_id="scrape_events",
         bash_command=(
             _script_command("scrape_events.py", "--track-pipeline")
             + " {% if params.backfill %}--backfill-from 2000-01-01{% endif %}"
         ),
+        cwd=str(PROJECT_ROOT),
+        env=_pipeline_env(),
+        append_env=True,
+    )
+
+    ensure_fighters_input = BashOperator(
+        task_id="ensure_fighters_input",
+        bash_command=_script_command("ensure_fighters.py"),
         cwd=str(PROJECT_ROOT),
         env=_pipeline_env(),
         append_env=True,
@@ -208,8 +220,20 @@ with DAG(
         append_env=True,
     )
 
+    publish_blob_data = BashOperator(
+        task_id="publish_blob_data",
+        bash_command=_script_command("blob_data_sync.py", "publish"),
+        cwd=str(PROJECT_ROOT),
+        env=_pipeline_env(),
+        append_env=True,
+        trigger_rule="all_done",
+    )
+
     # Fight pages are discovered from the event files produced by scrape_events.
     scrape_events >> scrape_event_fights
+
+    restore_blob_data >> scrape_events
+    restore_blob_data >> ensure_fighters_input >> validate_fighters
 
     scrape_events >> validate_events
     scrape_event_fights >> validate_fight_summary
@@ -224,3 +248,4 @@ with DAG(
     transform >> archive_raw >> processed_data_quality
     processed_data_quality >> delete_staging_files >> duckdb_load
     duckdb_load >> database_quality >> run_complete
+    run_complete >> publish_blob_data
