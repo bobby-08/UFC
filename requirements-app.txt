@@ -1,6 +1,8 @@
 # Dependencies used by the UFC application inside the Airflow image.
 # Airflow itself and its providers come from the pinned apache/airflow image.
 beautifulsoup4==4.15.0
+azure-identity==1.26.0
+azure-storage-blob==12.31.0
 duckdb==1.5.3
 playwright==1.60.0
 polars==1.42.1

@@ -53,5 +53,40 @@ docker compose run --rm airflow-scheduler airflow dags list
 docker compose down
 ```
 
-The `postgres-data` volume contains Airflow metadata. Project data and DuckDB
-remain under the mounted `data/` directory.
+The `postgres-data` volume contains Airflow metadata. In local mode, project
+data and DuckDB stay under the mounted `data/` directory.
+
+## Azure Blob data backend
+
+For the Azure VM deployment, set these values in the VM's private `.env` file:
+
+```dotenv
+UFC_DATA_BACKEND=azure_blob
+AZURE_STORAGE_ACCOUNT_NAME=ufcdatasets
+AZURE_STORAGE_CONTAINER=ufc-data
+```
+
+The VM must have a system-assigned managed identity with the **Storage Blob
+Data Contributor** role on the `ufc-data` container. The application uses that
+identity; no storage key or connection string is needed.
+
+With `UFC_DATA_BACKEND=azure_blob`, each DAG run restores existing project data
+from Blob to its working directory, runs the existing filesystem-based
+pipeline, publishes the data and DuckDB file back to Blob, then removes those
+local working copies after upload succeeds. Blob object paths mirror the
+project data paths: `raw/`, `archive/raw/`, `processed/`, and `db/`. Staging
+files are temporary and are not copied to Blob. Files under `archive/raw/` are
+uploaded with the Cool access tier.
+
+VM-local temporary data is required while this pipeline processes files.
+Airflow's Postgres metadata volume and application logs remain on the VM; the
+project DuckDB file is copied to and restored from Blob between DAG runs.
+If publishing fails, the local working files are left in place for recovery.
+When `UFC_DATA_BACKEND` is `local` (the default), Blob synchronization is
+skipped and data stays in the local `data/` directory.
+
+After pulling these changes on the VM, edit `.env`, then rebuild and restart:
+
+```bash
+sudo docker compose up -d --build
+```

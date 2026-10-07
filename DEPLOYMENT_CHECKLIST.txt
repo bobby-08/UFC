@@ -14,22 +14,31 @@ AZURE VM SETUP
 [x] Install Docker Engine and the Docker Compose plugin.
 
 DEPLOY THE PROJECT
-[ ] Clone the UFC repository's web-scraper branch on the VM.
-[ ] Copy .env.example to .env.
-[ ] Set AIRFLOW_UID to the output of `id -u`.
-[ ] Set separate random values for POSTGRES_PASSWORD and AIRFLOW_JWT_SECRET in .env.
-[ ] Build the Docker image with `sudo docker compose build`.
-[ ] Initialize Airflow once with `sudo docker compose run --rm airflow-init`.
-[ ] Start the containers with `sudo docker compose up -d`.
-[ ] Confirm services are running with `sudo docker compose ps`.
-[ ] Retrieve the generated Airflow password from the API server container.
-[ ] Open an SSH tunnel to VM port 8080 and visit http://localhost:8080 locally.
+[x] Clone the UFC repository's web-scraper branch on the VM.
+[x] Copy .env.example to .env.
+[x] Set AIRFLOW_UID to the output of `id -u`.
+[x] Set separate random values for POSTGRES_PASSWORD and AIRFLOW_JWT_SECRET in .env.
+[x] Build the Docker image with `sudo docker compose build`.
+[x] Initialize Airflow once with `sudo docker compose run --rm airflow-init`.
+[x] Start the containers with `sudo docker compose up -d`.
+[x] Confirm services are running with `sudo docker compose ps`.
+[x] Retrieve the generated Airflow password from the API server container.
+[x] Open an SSH tunnel to VM port 8080 and visit http://localhost:8080 locally.
 
 AFTER DEPLOYMENT
-[ ] Verify the UFC DAG appears in Airflow.
+[x] Verify the UFC DAG appears in Airflow.
 [ ] For code updates: pull the latest branch and run `sudo docker compose up -d --build`.
 [ ] Keep .env private. Do not run `docker compose down -v` if you want to retain the database volume.
 
+AZURE BLOB DATA STORAGE
+[x] Create the `ufcdatasets` storage account and `ufc-data` container.
+[ ] Confirm anonymous access is disabled on the `ufc-data` container.
+[x] Enable the VM system-assigned identity and grant it Storage Blob Data Contributor on the container.
+[ ] Deploy Blob sync support and set `UFC_DATA_BACKEND=azure_blob` in the VM's private .env.
+[ ] Run the DAG and confirm project data is present in Blob under `raw/`, `archive/raw/`, `processed/`, and `db/`.
+[ ] Optionally add a lifecycle policy for `ufc-data/archive/raw/`; archive uploads are set to Cool by the application.
+
 STATUS
 Local deployment changes are committed; branch matches the tracked origin/web-scraper branch.
-No Azure VM commands have been run yet.
+VM setup, repository clone, Docker installation, and .env configuration are complete (per user confirmation).
+Blob integration code has local pending edits; it has not been committed or deployed.

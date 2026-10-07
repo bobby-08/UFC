@@ -16,6 +16,9 @@ x-airflow-common: &airflow-common
     AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW_JWT_SECRET}
     AIRFLOW__CORE__AUTH_MANAGER: airflow.api_fastapi.auth.managers.simple.simple_auth_manager.SimpleAuthManager
     AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_USERS: "${AIRFLOW_ADMIN_USERNAME:-admin}:admin"
+    UFC_DATA_BACKEND: ${UFC_DATA_BACKEND:-local}
+    AZURE_STORAGE_ACCOUNT_NAME: ${AZURE_STORAGE_ACCOUNT_NAME:-}
+    AZURE_STORAGE_CONTAINER: ${AZURE_STORAGE_CONTAINER:-ufc-data}
     PYTHONPATH: /opt/airflow/src
     UFC_LOG_DIR: /opt/airflow/logs
     PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
